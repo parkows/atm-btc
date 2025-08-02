@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 from sqlalchemy.orm import Session as DBSession
-from app.models import Session as SessionModel, SessionStatusEnum, InvoiceStatusEnum, CryptoTypeEnum, NetworkTypeEnum
+from app.models import Session as SessionModel, SessionStatusEnum, InvoiceStatusEnum, CryptoTypeEnum, NetworkTypeEnum, TransactionTypeEnum
 from app.schemas import (
     SessionCreateRequest, SessionCreateResponse, SessionStatusResponse,
     InvoiceAssociationRequest, InvoiceAssociationResponse, PaymentStatusResponse
@@ -33,6 +33,7 @@ class SessionManager:
                 'atm_id': request.atm_id,
                 'amount_ars': request.amount_ars,
                 'crypto_type': request.crypto_type,
+                'transaction_type': request.transaction_type,
                 'timestamp': datetime.utcnow().isoformat()
             })
             
@@ -40,10 +41,14 @@ class SessionManager:
             if request.crypto_type not in ['BTC', 'USDT']:
                 raise Exception(f"Criptomoeda {request.crypto_type} não suportada")
             
+            # Validar tipo de transação
+            if request.transaction_type not in ['VENDA', 'COMPRA']:
+                raise Exception(f"Tipo de transação {request.transaction_type} não suportado")
+            
             # Validar limites usando crypto manager
             if not self.crypto_manager.validate_amount(request.crypto_type, request.amount_ars):
                 supported_cryptos = self.crypto_manager.get_supported_cryptos()
-                crypto_config = supported_cryptos[request.crypto_type]
+                crypto_config = supported_cryptos['cryptos'][request.crypto_type]
                 error_msg = f"Valor fora dos limites para {request.crypto_type} (${crypto_config['min_amount']:,.2f} a ${crypto_config['max_amount']:,.2f} ARS)"
                 self.logger.log_security('invalid_amount', 'medium', {
                     'amount': request.amount_ars,
@@ -61,6 +66,7 @@ class SessionManager:
                 self.logger.log_security('fraud_blocked', 'high', {
                     'amount': request.amount_ars,
                     'crypto_type': request.crypto_type,
+                    'transaction_type': request.transaction_type,
                     'fraud_score': fraud_check['fraud_score'],
                     'reasons': fraud_check['reasons']
                 })
@@ -75,21 +81,24 @@ class SessionManager:
             invoice_data = self.crypto_manager.create_invoice(
                 request.crypto_type, 
                 request.amount_ars, 
-                session_code
+                session_code,
+                request.transaction_type
             )
             
             # Determinar tipos de enum
             crypto_type_enum = CryptoTypeEnum.BTC if request.crypto_type == 'BTC' else CryptoTypeEnum.USDT
             network_type_enum = NetworkTypeEnum.Lightning if request.crypto_type == 'BTC' else NetworkTypeEnum.TRC20
+            transaction_type_enum = TransactionTypeEnum.VENDA if request.transaction_type == 'VENDA' else TransactionTypeEnum.COMPRA
             
             session = SessionModel(
                 session_code=session_code,
                 atm_id=request.atm_id,
                 crypto_type=crypto_type_enum,
                 network_type=network_type_enum,
+                transaction_type=transaction_type_enum,
                 status=SessionStatusEnum.aguardando_pagamento,
                 amount_ars=request.amount_ars,
-                crypto_amount=invoice_data['crypto_amount'],
+                crypto_amount=invoice_data['quote_data']['crypto_amount'],
                 invoice=invoice_data['invoice'],
                 invoice_status=InvoiceStatusEnum.aguardando,
                 created_at=datetime.utcnow(),
@@ -99,45 +108,46 @@ class SessionManager:
             db.add(session)
             db.commit()
             db.refresh(session)
-            db.close()
             
             # Log de sucesso
-            self.logger.log_transaction(session_code, 'session_created_success', {
+            self.logger.log_transaction('session_created', 'session_creation_success', {
                 'session_code': session_code,
+                'atm_id': request.atm_id,
                 'amount_ars': request.amount_ars,
                 'crypto_type': request.crypto_type,
-                'crypto_amount': invoice_data['crypto_amount'],
-                'network_type': invoice_data['network'],
-                'expires_at': expires_at.isoformat()
+                'transaction_type': request.transaction_type,
+                'crypto_amount': invoice_data['quote_data']['crypto_amount']
             })
             
-            # Notificação de nova sessão
-            self.notifications.notify_transaction_started({
-                'session_code': session_code,
-                'amount_ars': request.amount_ars,
-                'atm_id': request.atm_id,
-                'crypto_type': request.crypto_type,
-                'network_type': invoice_data['network']
-            })
+            # Notificação
+            self.notifications.send_session_created(
+                session_code=session_code,
+                crypto_type=request.crypto_type,
+                amount_ars=request.amount_ars,
+                crypto_amount=invoice_data['quote_data']['crypto_amount'],
+                transaction_type=request.transaction_type
+            )
             
             return SessionCreateResponse(
                 session_code=session_code,
                 amount_ars=request.amount_ars,
-                crypto_amount=invoice_data['crypto_amount'],
+                crypto_amount=invoice_data['quote_data']['crypto_amount'],
                 crypto_type=request.crypto_type,
-                network_type=invoice_data['network'],
+                network_type=network_type_enum.value,
+                transaction_type=request.transaction_type,
                 expires_at=expires_at,
                 invoice=invoice_data['invoice']
             )
             
         except Exception as e:
-            self.logger.log_transaction('session_created', 'session_creation_failed', {
+            self.logger.log_error('session_manager', 'create_session_error', {
                 'error': str(e),
                 'atm_id': request.atm_id,
                 'amount_ars': request.amount_ars,
-                'crypto_type': request.crypto_type
+                'crypto_type': request.crypto_type,
+                'transaction_type': request.transaction_type
             })
-            raise e
+            raise
 
     def get_status(self, session_code: str) -> SessionStatusResponse:
         """Obtém status de uma sessão"""

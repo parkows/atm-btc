@@ -1,131 +1,204 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
-from sqlalchemy.orm import Session as DBSession
-from app.schemas import (
-    SessionCreateRequest, SessionCreateResponse, SessionStatusResponse,
-    InvoiceAssociationRequest, InvoiceAssociationResponse, PaymentStatusResponse,
-    QuoteRequest, QuoteResponse, SupportedCryptosResponse, StandardResponse
-)
-from app.deps import session_manager, SessionLocal
-from app.core.crypto_manager import crypto_manager
-from app.models import Session as SessionModel
-from datetime import datetime
+#!/usr/bin/env python3
+"""
+APIs do ATM - LiquidGold
+Endpoints para operações de venda e compra de criptomoedas
+"""
 
-router = APIRouter()
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from typing import Dict, Any
+from ..deps import get_db
+from ..schemas import (
+    SessionCreateRequest, SessionCreateResponse, SessionStatusResponse,
+    PaymentStatusResponse, QuoteRequest, QuoteResponse, SupportedCryptosResponse,
+    PurchaseCreateRequest, PurchaseCreateResponse, PurchaseStatusResponse
+)
+from ..core.session_manager import SessionManager
+from ..core.purchase_manager import PurchaseManager
+from ..core.crypto_manager import CryptoManager
+from ..core.logger import atm_logger
+
+router = APIRouter(prefix="/api/atm", tags=["ATM Operations"])
+
+# Instâncias globais
+crypto_manager = CryptoManager()
 
 @router.get("/supported-cryptos", response_model=SupportedCryptosResponse)
-def get_supported_cryptos():
-    """Obtém lista de criptomoedas suportadas"""
+async def get_supported_cryptos():
+    """Lista criptomoedas suportadas"""
     try:
-        cryptos = crypto_manager.get_supported_cryptos()
-        return SupportedCryptosResponse(cryptos=cryptos)
+        return crypto_manager.get_supported_cryptos()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao obter criptomoedas suportadas: {str(e)}")
+        atm_logger.log_error('api', 'supported_cryptos_error', {'error': str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/quote", response_model=QuoteResponse)
-def get_quote(request: QuoteRequest):
-    """Obtém cotação para qualquer criptomoeda"""
+async def get_quote(request: QuoteRequest):
+    """Obtém cotação para criptomoeda"""
     try:
-        quote_data = crypto_manager.get_quote(request.crypto_type, request.amount_ars)
+        quote_data = crypto_manager.get_quote(
+            request.crypto_type, 
+            request.amount_ars,
+            request.transaction_type
+        )
         return QuoteResponse(**quote_data)
     except Exception as e:
+        atm_logger.log_error('api', 'quote_error', {
+            'crypto_type': request.crypto_type,
+            'amount_ars': request.amount_ars,
+            'transaction_type': request.transaction_type,
+            'error': str(e)
+        })
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/quote/{crypto_type}")
-def get_quote_legacy(crypto_type: str, amount_ars: float):
-    """Endpoint legado para cotação (mantido para compatibilidade)"""
+@router.post("/sessions", response_model=SessionCreateResponse)
+async def create_session(request: SessionCreateRequest, db: Session = Depends(get_db)):
+    """Cria sessão de venda de criptomoeda"""
     try:
-        quote_data = crypto_manager.get_quote(crypto_type, amount_ars)
-        return quote_data
+        session_manager = SessionManager(db)
+        response = session_manager.create_session(request)
+        return response
     except Exception as e:
+        atm_logger.log_error('api', 'create_session_error', {
+            'atm_id': request.atm_id,
+            'amount_ars': request.amount_ars,
+            'crypto_type': request.crypto_type,
+            'error': str(e)
+        })
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/session", response_model=SessionCreateResponse)
-def create_session(request: SessionCreateRequest):
-    """Cria uma nova sessão de transação"""
-    try:
-        return session_manager.create_session(request)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/session/{session_code}", response_model=SessionStatusResponse)
-def get_session_status(session_code: str):
+@router.get("/sessions/{session_code}", response_model=SessionStatusResponse)
+async def get_session_status(session_code: str, db: Session = Depends(get_db)):
     """Obtém status de uma sessão"""
     try:
-        return session_manager.get_status(session_code)
+        session_manager = SessionManager(db)
+        response = session_manager.get_session_status(session_code)
+        return response
     except Exception as e:
+        atm_logger.log_error('api', 'session_status_error', {
+            'session_code': session_code,
+            'error': str(e)
+        })
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.post("/session/{session_code}/invoice", response_model=InvoiceAssociationResponse)
-def associate_invoice(session_code: str, request: InvoiceAssociationRequest):
-    """Associa invoice a uma sessão"""
+@router.get("/sessions/{session_code}/payment-status", response_model=PaymentStatusResponse)
+async def check_payment_status(session_code: str, db: Session = Depends(get_db)):
+    """Verifica status do pagamento de uma sessão"""
     try:
-        return session_manager.associate_invoice(session_code, request)
+        session_manager = SessionManager(db)
+        response = session_manager.check_payment_status(session_code)
+        return response
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/session/{session_code}/payment-status", response_model=PaymentStatusResponse)
-def get_payment_status(session_code: str):
-    """Obtém status do pagamento"""
-    try:
-        return session_manager.get_payment_status(session_code)
-    except Exception as e:
+        atm_logger.log_error('api', 'payment_status_error', {
+            'session_code': session_code,
+            'error': str(e)
+        })
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.patch("/session/{session_code}/invoice-status")
-def update_invoice_status(session_code: str, invoice_status: str):
-    """Atualiza status do invoice"""
+# Novos endpoints para COMPRA
+@router.post("/purchases", response_model=PurchaseCreateResponse)
+async def create_purchase(request: PurchaseCreateRequest, db: Session = Depends(get_db)):
+    """Cria uma nova compra de criptomoeda"""
     try:
-        session_manager.update_invoice_status(session_code, invoice_status)
-        return StandardResponse(detail=f"Status do invoice atualizado para {invoice_status}")
+        purchase_manager = PurchaseManager(db)
+        response = purchase_manager.create_purchase(
+            atm_id=request.atm_id,
+            amount_ars=request.amount_ars,
+            crypto_type=request.crypto_type,
+            crypto_address=request.crypto_address,
+            ars_payment_method=request.ars_payment_method
+        )
+        return PurchaseCreateResponse(**response)
     except Exception as e:
+        atm_logger.log_error('api', 'create_purchase_error', {
+            'atm_id': request.atm_id,
+            'amount_ars': request.amount_ars,
+            'crypto_type': request.crypto_type,
+            'error': str(e)
+        })
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/sessions")
-def list_sessions(
-    status: Optional[str] = Query(None, description="Filtrar por status"),
-    atm_id: Optional[str] = Query(None, description="Filtrar por ATM ID"),
-    crypto_type: Optional[str] = Query(None, description="Filtrar por tipo de criptomoeda"),
-    network_type: Optional[str] = Query(None, description="Filtrar por tipo de rede"),
-    date_from: Optional[str] = Query(None, description="Data inicial (ISO format)"),
-    date_to: Optional[str] = Query(None, description="Data final (ISO format)")
-):
-    """Lista sessões com filtros opcionais"""
+@router.get("/purchases/{purchase_code}", response_model=PurchaseStatusResponse)
+async def get_purchase_status(purchase_code: str, db: Session = Depends(get_db)):
+    """Obtém status de uma compra"""
     try:
-        db: DBSession = SessionLocal()
-        query = db.query(SessionModel)
-        
-        if status:
-            query = query.filter(SessionModel.status == status)
-        if atm_id:
-            query = query.filter(SessionModel.atm_id == atm_id)
-        if crypto_type:
-            query = query.filter(SessionModel.crypto_type == crypto_type)
-        if network_type:
-            query = query.filter(SessionModel.network_type == network_type)
-        if date_from:
-            query = query.filter(SessionModel.created_at >= datetime.fromisoformat(date_from))
-        if date_to:
-            query = query.filter(SessionModel.created_at <= datetime.fromisoformat(date_to))
-        
-        sessions = query.order_by(SessionModel.created_at.desc()).all()
-        db.close()
-        
-        return [
-            {
-                "session_code": s.session_code,
-                "atm_id": s.atm_id,
-                "crypto_type": s.crypto_type.value,
-                "network_type": s.network_type.value,
-                "status": s.status.value,
-                "amount_ars": s.amount_ars,
-                "crypto_amount": s.crypto_amount,
-                "invoice": s.invoice,
-                "invoice_status": s.invoice_status.value if s.invoice_status else None,
-                "created_at": s.created_at,
-                "expires_at": s.expires_at
-            }
-            for s in sessions
-        ]
+        purchase_manager = PurchaseManager(db)
+        response = purchase_manager.get_purchase_status(purchase_code)
+        return PurchaseStatusResponse(**response)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao listar sessões: {str(e)}")
+        atm_logger.log_error('api', 'purchase_status_error', {
+            'purchase_code': purchase_code,
+            'error': str(e)
+        })
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.post("/purchases/{purchase_code}/check-crypto")
+async def check_crypto_received(purchase_code: str, db: Session = Depends(get_db)):
+    """Verifica se a criptomoeda foi recebida"""
+    try:
+        purchase_manager = PurchaseManager(db)
+        response = purchase_manager.check_crypto_received(purchase_code)
+        return response
+    except Exception as e:
+        atm_logger.log_error('api', 'check_crypto_error', {
+            'purchase_code': purchase_code,
+            'error': str(e)
+        })
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/purchases/{purchase_code}/confirm-ars")
+async def confirm_ars_payment(purchase_code: str, db: Session = Depends(get_db)):
+    """Confirma pagamento em ARS e finaliza a compra"""
+    try:
+        purchase_manager = PurchaseManager(db)
+        response = purchase_manager.confirm_ars_payment(purchase_code)
+        return response
+    except Exception as e:
+        atm_logger.log_error('api', 'confirm_ars_error', {
+            'purchase_code': purchase_code,
+            'error': str(e)
+        })
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/purchases/{purchase_code}/cancel")
+async def cancel_purchase(purchase_code: str, db: Session = Depends(get_db)):
+    """Cancela uma compra"""
+    try:
+        purchase_manager = PurchaseManager(db)
+        response = purchase_manager.cancel_purchase(purchase_code)
+        return response
+    except Exception as e:
+        atm_logger.log_error('api', 'cancel_purchase_error', {
+            'purchase_code': purchase_code,
+            'error': str(e)
+        })
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/purchases/atm/{atm_id}")
+async def get_purchases_by_atm(atm_id: str, limit: int = 50, db: Session = Depends(get_db)):
+    """Obtém compras de um ATM específico"""
+    try:
+        purchase_manager = PurchaseManager(db)
+        response = purchase_manager.get_purchases_by_atm(atm_id, limit)
+        return response
+    except Exception as e:
+        atm_logger.log_error('api', 'get_purchases_error', {
+            'atm_id': atm_id,
+            'error': str(e)
+        })
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Endpoints legados para compatibilidade
+@router.get("/quote/{crypto_type}")
+async def get_quote_legacy(crypto_type: str, amount_ars: float):
+    """Endpoint legado para cotação"""
+    try:
+        quote_data = crypto_manager.get_quote(crypto_type, amount_ars, "VENDA")
+        return quote_data
+    except Exception as e:
+        atm_logger.log_error('api', 'quote_legacy_error', {
+            'crypto_type': crypto_type,
+            'amount_ars': amount_ars,
+            'error': str(e)
+        })
+        raise HTTPException(status_code=400, detail=str(e))
