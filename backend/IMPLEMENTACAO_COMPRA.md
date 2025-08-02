@@ -96,18 +96,18 @@
 ### **💰 Taxas Diferenciadas**
 
 #### **Lógica de Negócio:**
-- **VENDA:** Taxa maior (8-10%) - Cliente precisa de ARS urgentemente
+- **VENDA:** Taxa competitiva (6-8%) - Cliente precisa de ARS urgentemente
 - **COMPRA:** Taxa menor (4-6%) - Incentivar entrada no mercado crypto
 
 #### **Bitcoin (BTC)**
-- **VENDA:** 10% (cliente vende BTC por ARS - urgência)
+- **VENDA:** 8% (cliente vende BTC por ARS - urgência)
 - **COMPRA:** 6% (cliente compra BTC com ARS - incentivo)
-- **Diferença:** 4% (incentivo para compra)
+- **Diferença:** 2% (incentivo para compra)
 
 #### **USDT**
-- **VENDA:** 8% (cliente vende USDT por ARS - urgência)
+- **VENDA:** 6% (cliente vende USDT por ARS - urgência)
 - **COMPRA:** 4% (cliente compra USDT com ARS - incentivo)
-- **Diferença:** 4% (incentivo para compra)
+- **Diferença:** 2% (incentivo para compra)
 
 #### **Justificativa de Mercado:**
 1. **🇦🇷 Contexto Argentino:** Inflação alta → ARS perde valor rapidamente

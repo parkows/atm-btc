@@ -32,7 +32,7 @@ class CryptoManager:
                 'decimals': 8,
                 'min_amount': 10000,
                 'max_amount': 250000,
-                'service_fee': 10.0,  # Venda: taxa maior (urgência)
+                'service_fee': 8.0,   # Venda: taxa competitiva
                 'purchase_fee': 6.0   # Compra: taxa menor (incentivo)
             },
             'USDT': {
@@ -41,8 +41,8 @@ class CryptoManager:
                 'decimals': 6,
                 'min_amount': 10000,
                 'max_amount': 250000,
-                'service_fee': 8.0,   # Venda: taxa maior
-                'purchase_fee': 4.0   # Compra: taxa menor
+                'service_fee': 6.0,   # Venda: taxa competitiva
+                'purchase_fee': 4.0   # Compra: taxa menor (incentivo)
             }
         }
     
