@@ -27,14 +27,14 @@ O **LiquidGold ATM** é um sistema completo de ATM (Automated Teller Machine) qu
 - ✅ **Venda:** Cotações em tempo real via Bitso API
 - ✅ **Compra:** Endereços Lightning para recebimento
 - ✅ **Transações instantâneas**
-- ✅ **Taxa de venda:** 10% | **Taxa de compra:** 8%
+- ✅ **Taxa de venda:** 10% | **Taxa de compra:** 6%
 - ✅ **Limites:** $10,000 - $250,000 ARS
 
 #### **USDT - Rede TRC20**
 - ✅ **Venda:** Cotações em tempo real via Binance API
 - ✅ **Compra:** Endereços TRC20 para recebimento
 - ✅ **Transações rápidas**
-- ✅ **Taxa de venda:** 5% | **Taxa de compra:** 4%
+- ✅ **Taxa de venda:** 8% | **Taxa de compra:** 4%
 - ✅ **Limites:** $10,000 - $250,000 ARS
 
 ### **💰 Fluxos de Transação**

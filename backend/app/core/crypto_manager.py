@@ -32,8 +32,8 @@ class CryptoManager:
                 'decimals': 8,
                 'min_amount': 10000,
                 'max_amount': 250000,
-                'service_fee': 10.0,
-                'purchase_fee': 8.0  # Taxa menor para compra
+                'service_fee': 10.0,  # Venda: taxa maior (urgência)
+                'purchase_fee': 6.0   # Compra: taxa menor (incentivo)
             },
             'USDT': {
                 'name': 'Tether USD',
@@ -41,8 +41,8 @@ class CryptoManager:
                 'decimals': 6,
                 'min_amount': 10000,
                 'max_amount': 250000,
-                'service_fee': 5.0,
-                'purchase_fee': 4.0  # Taxa menor para compra
+                'service_fee': 8.0,   # Venda: taxa maior
+                'purchase_fee': 4.0   # Compra: taxa menor
             }
         }
     
