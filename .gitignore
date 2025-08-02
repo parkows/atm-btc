@@ -1,0 +1,672 @@
+# LiquidGold ATM - Git Ignore File
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/#use-with-ide
+.pdm.toml
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
+#  project, it is recommended to include the following files:
+#  .idea/
+#  *.iml
+#  *.ipr
+#  *.iws
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# =============================================================================
+# LIQUIDGOLD ATM SPECIFIC
+# =============================================================================
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+atm_btc.db
+liquidgold_atm.db
+atm_btc.db-journal
+liquidgold_atm.db-journal
+
+# Log files
+logs/
+*.log
+audit.log
+security.log
+system.log
+transaction.log
+error.log
+debug.log
+performance.log
+
+# Configuration files with sensitive data
+config/
+*.config.json
+atm_config.json
+production_config.json
+logging_config.json
+liquidgold_config.json
+
+# Reports and data exports
+reports/
+*.csv
+*.xlsx
+*.pdf
+
+# JSON files (except translations and schemas)
+*.json
+!translations/*.json
+!app/schemas.json
+!package.json
+!package-lock.json
+
+# Executables and builds
+dist/
+build/
+*.exe
+*.app
+*.dmg
+*.pkg
+RedATM_Desktop*
+LiquidGold_Desktop*
+*.spec
+*.pyc
+__pycache__/
+
+# Desktop shortcuts
+*.lnk
+*.desktop
+
+# =============================================================================
+# SECURITY & SENSITIVE DATA
+# =============================================================================
+
+# API Keys and secrets
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+secrets.json
+api_keys.json
+credentials.json
+private_keys.json
+webhook_keys.json
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Wallet files
+*.wallet
+wallet.dat
+*.dat
+lightning_wallet.dat
+bitcoin_wallet.dat
+usdt_wallet.dat
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# DEVELOPMENT TOOLS
+# =============================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# TEMPORARY FILES
+# =============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.pid
+*.lock
+*.swp
+*.swo
+*~
+.cache/
+temp/
+tmp/
+
+# Crash dumps
+*.dmp
+*.crash
+
+# Memory dumps
+*.hprof
+
+# =============================================================================
+# NETWORK & PROXY
+# =============================================================================
+
+# Network configuration
+hosts
+hosts.bak
+
+# Proxy settings
+proxy.conf
+proxy.txt
+
+# =============================================================================
+# MONITORING & METRICS
+# =============================================================================
+
+# Monitoring data
+metrics/
+monitoring/
+*.metrics
+*.stats
+
+# Performance data
+perf.data
+perf.data.old
+
+# =============================================================================
+# TESTING & DEVELOPMENT
+# =============================================================================
+
+# Test files
+test_*.py
+*_test.py
+tests/
+test_results/
+coverage/
+stress_test_*.py
+*_demo.py
+*_example.py
+quick_test_*.py
+auto_test_*.py
+
+# Development files
+dev/
+development/
+debug/
+*.debug
+debug_*.py
+error_*.py
+demo_*.py
+example_*.py
+
+# =============================================================================
+# DEPLOYMENT & CI/CD
+# =============================================================================
+
+# Deployment files
+deploy/
+deployment/
+*.deploy
+*.deployment
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+jenkins/
+*.jenkins
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+*.dockerfile
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+
+# Documentation builds
+docs/_build/
+docs/build/
+site/
+
+# Sensitive documentation
+*_PASSWORD.md
+*_SECRET.md
+*_CREDENTIALS.md
+*_API_KEYS.md
+*_CONFIG.md
+*_SETUP.md
+*_DEPLOYMENT.md
+
+# =============================================================================
+# MISCELLANEOUS
+# =============================================================================
+
+# Backup files
+*.orig
+*.rej
+*.orig~
+
+# Archive files
+*.tar
+*.tar.gz
+*.tar.bz2
+*.zip
+*.rar
+*.7z
+
+# Compressed files
+*.gz
+*.bz2
+*.xz
+
+# =============================================================================
+# LIQUIDGOLD ATM SPECIFIC IGNORES
+# =============================================================================
+
+# Sensitive ATM data
+atm_sessions/
+session_data/
+user_sessions/
+transaction_history/
+payment_data/
+customer_data/
+kyc_data/
+aml_data/
+
+# API credentials and endpoints
+binance_api_key.txt
+bitso_api_key.txt
+webhook_endpoints.txt
+api_endpoints.txt
+
+# Network configuration
+lightning_config/
+bitcoin_config/
+usdt_config/
+network_settings.json
+
+# Transaction data
+pending_transactions/
+completed_transactions/
+failed_transactions/
+transaction_logs/
+
+# Security and compliance
+compliance_reports/
+kyc_documents/
+aml_reports/
+audit_trails/
+security_alerts/
+
+# Performance and monitoring
+performance_metrics/
+system_monitoring/
+health_checks/
+uptime_logs/
+
+# Backup and recovery
+backup_data/
+recovery_files/
+snapshot_data/
+restore_points/
+
+# ATM specific files
+atm_data/
+atm_sessions/
+atm_transactions/
+
+# Lightning Network
+lightning/
+*.lightning
+*.ln
+
+# Bitcoin Core
+bitcoin/
+*.bitcoin
+*.btc
+
+# USDT specific
+usdt/
+*.usdt
+
+# QR Codes (temporary)
+qr_codes/
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Session data
+sessions/
+session_data/
+*.session
+
+# Transaction data
+transactions/
+transaction_data/
+*.transaction
+
+# User data
+users/
+user_data/
+*.user
+
+# Compliance data
+compliance/
+kyc/
+aml/
+*.compliance
+
+# Audit trails
+audit/
+audit_trails/
+*.audit
+
+# Security logs
+security/
+security_logs/
+*.security
+
+# System logs
+system/
+system_logs/
+*.system
+
+# Performance logs
+performance/
+performance_logs/
+*.performance
+
+# Error logs
+errors/
+error_logs/
+*.error
+
+# Debug logs
+debug/
+debug_logs/
+*.debug
+
+# =============================================================================
+# PRODUCTION FILES (NEVER COMMIT)
+# =============================================================================
+
+# Production configurations
+production.env
+staging.env
+live_config.json
+production_config.json
+staging_config.json
+
+# Production databases
+production.db
+staging.db
+live.db
+backup.db
+
+# Production logs
+production.log
+staging.log
+live.log
+error_production.log
+
+# Production certificates
+*.crt
+*.pem
+*.key
+*.p12
+*.pfx
+ssl/
+certificates/
+
+# Production API keys
+production_api_keys.json
+live_api_keys.json
+staging_api_keys.json
+
+# Production webhooks
+production_webhooks.json
+live_webhooks.json
+staging_webhooks.json
+
+# Production monitoring
+production_monitoring.json
+live_monitoring.json
+staging_monitoring.json
+
+# Production backups
+production_backup/
+live_backup/
+staging_backup/
+
+# Production data
+production_data/
+live_data/
+staging_data/
+
+# =============================================================================
+# END OF FILE
+# ============================================================================= 

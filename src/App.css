@@ -1,0 +1,99 @@
+.App {
+  text-align: center;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  min-height: 100vh;
+}
+
+/* Animação de hover para os cards */
+.MuiCard-root {
+  transition: all 0.3s ease !important;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-5px) !important;
+}
+
+/* Estilo para o botão de Bitcoin destacado */
+.bitcoin-card {
+  border: 3px solid #f7931a !important;
+  box-shadow: 0 0 20px rgba(247, 147, 26, 0.3) !important;
+}
+
+/* Estilo para o modal */
+.MuiDialog-paper {
+  border-radius: 16px !important;
+}
+
+/* Estilo para o stepper */
+.MuiStepLabel-root.Mui-completed .MuiStepLabel-labelContainer .MuiStepLabel-label {
+  color: #4caf50 !important;
+}
+
+.MuiStepLabel-root.Mui-active .MuiStepLabel-labelContainer .MuiStepLabel-label {
+  color: #1976d2 !important;
+  font-weight: bold !important;
+}
+
+/* Estilo para o QR Code */
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+/* Estilo para o footer */
+.footer-container {
+  background: rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Estilo para o header */
+.header-container {
+  background: transparent !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+  .MuiContainer-root {
+    padding: 16px !important;
+  }
+  
+  .MuiTypography-h4 {
+    font-size: 1.5rem !important;
+  }
+  
+  .MuiCard-root {
+    height: 150px !important;
+  }
+}
+
+/* Animação de loading */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.loading-animation {
+  animation: pulse 1.5s ease-in-out infinite;
+} 

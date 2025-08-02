@@ -1,0 +1,20 @@
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+aiosqlite==0.19.0
+
+# HTTP Client
+requests==2.31.0
+httpx==0.25.2
+
+# Testing
+pytest==7.4.3
+
+# System Monitoring
+psutil==5.9.6
+
+# Utilities
+python-multipart==0.0.6
