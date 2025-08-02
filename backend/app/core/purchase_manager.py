@@ -2,6 +2,7 @@
 """
 Módulo de Gerenciamento de Compras - LiquidGold ATM
 Gerencia compras de criptomoedas pelos clientes
+Integrado com sistema de SMS para coleta de endereços
 """
 
 import uuid
@@ -11,6 +12,7 @@ from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 from ..models import Purchase, PurchaseStatusEnum, CryptoTypeEnum, NetworkTypeEnum
 from .crypto_manager import CryptoManager
+from .sms_manager import sms_manager
 from .logger import atm_logger
 from .config import atm_config
 
@@ -22,9 +24,158 @@ class PurchaseManager:
         self.crypto_manager = CryptoManager()
         self.logger = atm_logger
         self.config = atm_config
+        self.sms_manager = sms_manager
+    
+    def start_purchase_process(self, atm_id: str, phone_number: str) -> Dict[str, Any]:
+        """Inicia processo de compra com verificação por SMS"""
+        try:
+            # Enviar código de verificação
+            sms_result = self.sms_manager.send_verification_code(phone_number, atm_id)
+            
+            if sms_result['success']:
+                self.logger.log_system('purchase_manager', 'purchase_process_started', {
+                    'atm_id': atm_id,
+                    'phone_number': phone_number
+                })
+                
+                return {
+                    'success': True,
+                    'message': 'Código de verificação enviado',
+                    'phone_number': phone_number,
+                    'next_step': 'verify_code',
+                    'expires_in': sms_result['expires_in']
+                }
+            else:
+                raise Exception("Erro ao enviar código de verificação")
+                
+        except Exception as e:
+            self.logger.log_error('purchase_manager', 'start_purchase_process_error', {
+                'atm_id': atm_id,
+                'phone_number': phone_number,
+                'error': str(e)
+            })
+            raise
+    
+    def verify_phone_and_continue(self, phone_number: str, verification_code: str) -> Dict[str, Any]:
+        """Verifica código e continua processo de compra"""
+        try:
+            # Verificar código
+            verify_result = self.sms_manager.verify_code(phone_number, verification_code)
+            
+            if verify_result['success']:
+                self.logger.log_system('purchase_manager', 'phone_verified', {
+                    'phone_number': phone_number,
+                    'atm_id': verify_result['atm_id']
+                })
+                
+                return {
+                    'success': True,
+                    'message': 'Telefone verificado com sucesso',
+                    'phone_number': phone_number,
+                    'atm_id': verify_result['atm_id'],
+                    'next_step': 'select_crypto'
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': verify_result['message']
+                }
+                
+        except Exception as e:
+            self.logger.log_error('purchase_manager', 'verify_phone_error', {
+                'phone_number': phone_number,
+                'error': str(e)
+            })
+            raise
+    
+    def request_wallet_address(self, phone_number: str, crypto_type: str, amount_ars: float) -> Dict[str, Any]:
+        """Solicita endereço da wallet por SMS"""
+        try:
+            # Validar criptomoeda
+            if crypto_type not in ['BTC', 'USDT']:
+                raise Exception(f"Criptomoeda {crypto_type} não suportada")
+            
+            # Validar valor
+            if not self.crypto_manager.validate_amount(crypto_type, amount_ars):
+                supported_cryptos = self.crypto_manager.get_supported_cryptos()
+                crypto_config = supported_cryptos['cryptos'][crypto_type]
+                raise Exception(f"Valor fora dos limites para {crypto_type} (${crypto_config['min_amount']:,.2f} a ${crypto_config['max_amount']:,.2f} ARS)")
+            
+            # Solicitar endereço por SMS
+            sms_result = self.sms_manager.request_wallet_address(phone_number, crypto_type, amount_ars)
+            
+            if sms_result['success']:
+                self.logger.log_system('purchase_manager', 'wallet_address_requested', {
+                    'phone_number': phone_number,
+                    'crypto_type': crypto_type,
+                    'amount_ars': amount_ars,
+                    'request_id': sms_result['request_id']
+                })
+                
+                return {
+                    'success': True,
+                    'message': 'SMS enviado solicitando endereço da wallet',
+                    'phone_number': phone_number,
+                    'crypto_type': crypto_type,
+                    'amount_ars': amount_ars,
+                    'request_id': sms_result['request_id'],
+                    'expires_in': sms_result['expires_in']
+                }
+            else:
+                raise Exception("Erro ao solicitar endereço da wallet")
+                
+        except Exception as e:
+            self.logger.log_error('purchase_manager', 'request_wallet_address_error', {
+                'phone_number': phone_number,
+                'crypto_type': crypto_type,
+                'amount_ars': amount_ars,
+                'error': str(e)
+            })
+            raise
+    
+    def process_wallet_address_response(self, phone_number: str, sms_message: str) -> Dict[str, Any]:
+        """Processa resposta SMS com endereço da wallet e cria compra"""
+        try:
+            # Processar resposta SMS
+            sms_result = self.sms_manager.process_wallet_address_response(phone_number, sms_message)
+            
+            if not sms_result['success']:
+                return sms_result
+            
+            # Extrair dados da resposta
+            wallet_address = sms_result['wallet_address']
+            crypto_type = sms_result['crypto_type']
+            amount_ars = sms_result['amount_ars']
+            
+            # Criar compra com endereço recebido
+            purchase_result = self.create_purchase(
+                atm_id="LIQUIDGOLD_ATM001",  # Em produção, obter do contexto
+                amount_ars=amount_ars,
+                crypto_type=crypto_type,
+                crypto_address=wallet_address,
+                ars_payment_method="efectivo",
+                phone_number=phone_number
+            )
+            
+            return {
+                'success': True,
+                'message': 'Compra criada com sucesso',
+                'purchase_code': purchase_result['purchase_code'],
+                'wallet_address': wallet_address,
+                'crypto_type': crypto_type,
+                'amount_ars': amount_ars,
+                'phone_number': phone_number
+            }
+            
+        except Exception as e:
+            self.logger.log_error('purchase_manager', 'process_wallet_address_error', {
+                'phone_number': phone_number,
+                'error': str(e)
+            })
+            raise
     
     def create_purchase(self, atm_id: str, amount_ars: float, crypto_type: str, 
-                       crypto_address: str, ars_payment_method: str) -> Dict[str, Any]:
+                       crypto_address: str, ars_payment_method: str, phone_number: str = None) -> Dict[str, Any]:
         """Cria uma nova compra de criptomoeda"""
         try:
             # Validar criptomoeda
@@ -66,7 +217,8 @@ class PurchaseManager:
                 'purchase_code': purchase_code,
                 'crypto_type': crypto_type,
                 'amount_ars': amount_ars,
-                'crypto_amount': quote_data['crypto_amount']
+                'crypto_amount': quote_data['crypto_amount'],
+                'phone_number': phone_number
             })
             
             return {
@@ -77,6 +229,7 @@ class PurchaseManager:
                 'network_type': network_type.value,
                 'crypto_address': crypto_address,
                 'ars_payment_method': ars_payment_method,
+                'phone_number': phone_number,
                 'expires_at': expires_at.isoformat(),
                 'quote_data': quote_data
             }
@@ -87,7 +240,8 @@ class PurchaseManager:
                 'error': str(e),
                 'atm_id': atm_id,
                 'amount_ars': amount_ars,
-                'crypto_type': crypto_type
+                'crypto_type': crypto_type,
+                'phone_number': phone_number
             })
             raise
     
