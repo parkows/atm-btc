@@ -58,6 +58,17 @@ async def admin_interface():
 async def admin_js():
     return FileResponse("app/static/admin.js", media_type="application/javascript")
 
+# Rota para interface do ATM
+@app.get("/atm")
+async def get_atm_interface():
+    """Interface principal do ATM"""
+    return FileResponse("app/static/atm_interface.html")
+
+@app.get("/atm_interface.js")
+async def get_atm_interface_js():
+    """JavaScript da interface do ATM"""
+    return FileResponse("app/static/atm_interface.js")
+
 # Background tasks
 def health_check_task():
     """Tarefa em background para verificação de saúde do sistema"""

@@ -118,62 +118,66 @@ async def create_purchase(request: PurchaseCreateRequest, db: Session = Depends(
         })
         raise HTTPException(status_code=400, detail=str(e))
 
-# Novos endpoints para fluxo SMS
-@router.post("/purchases/sms/start")
-async def start_purchase_sms(atm_id: str, phone_number: str, db: Session = Depends(get_db)):
-    """Inicia processo de compra com verificação por SMS"""
+# Novos endpoints para fluxo SMS/WhatsApp
+@router.post("/purchases/communication/start")
+async def start_purchase_communication(atm_id: str, phone_number: str, method: str = "whatsapp", db: Session = Depends(get_db)):
+    """Inicia processo de compra com verificação por método escolhido"""
     try:
         purchase_manager = PurchaseManager(db)
-        response = purchase_manager.start_purchase_process(atm_id, phone_number)
+        response = purchase_manager.start_purchase_process(atm_id, phone_number, method)
         return response
     except Exception as e:
-        atm_logger.log_error('api', 'start_purchase_sms_error', {
+        atm_logger.log_system('api', 'start_purchase_communication_error', {
             'atm_id': atm_id,
             'phone_number': phone_number,
+            'method': method,
             'error': str(e)
         })
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/purchases/sms/verify")
-async def verify_purchase_sms(phone_number: str, verification_code: str, db: Session = Depends(get_db)):
-    """Verifica código SMS e continua processo de compra"""
+@router.post("/purchases/communication/verify")
+async def verify_purchase_communication(phone_number: str, verification_code: str, method: str = "whatsapp", db: Session = Depends(get_db)):
+    """Verifica código e continua processo de compra"""
     try:
         purchase_manager = PurchaseManager(db)
-        response = purchase_manager.verify_phone_and_continue(phone_number, verification_code)
+        response = purchase_manager.verify_phone_and_continue(phone_number, verification_code, method)
         return response
     except Exception as e:
-        atm_logger.log_error('api', 'verify_purchase_sms_error', {
+        atm_logger.log_system('api', 'verify_purchase_communication_error', {
             'phone_number': phone_number,
+            'method': method,
             'error': str(e)
         })
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/purchases/sms/request-address")
-async def request_wallet_address_sms(phone_number: str, crypto_type: str, amount_ars: float, db: Session = Depends(get_db)):
-    """Solicita endereço da wallet por SMS"""
+@router.post("/purchases/communication/request-address")
+async def request_wallet_address_communication(phone_number: str, crypto_type: str, amount_ars: float, method: str = "whatsapp", db: Session = Depends(get_db)):
+    """Solicita endereço da wallet via método escolhido"""
     try:
         purchase_manager = PurchaseManager(db)
-        response = purchase_manager.request_wallet_address(phone_number, crypto_type, amount_ars)
+        response = purchase_manager.request_wallet_address(phone_number, crypto_type, amount_ars, method)
         return response
     except Exception as e:
-        atm_logger.log_error('api', 'request_wallet_address_sms_error', {
+        atm_logger.log_system('api', 'request_wallet_address_communication_error', {
             'phone_number': phone_number,
             'crypto_type': crypto_type,
             'amount_ars': amount_ars,
+            'method': method,
             'error': str(e)
         })
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/purchases/sms/process-response")
-async def process_wallet_address_response(phone_number: str, sms_message: str, db: Session = Depends(get_db)):
-    """Processa resposta SMS com endereço da wallet"""
+@router.post("/purchases/communication/process-response")
+async def process_wallet_address_response_communication(phone_number: str, message: str, method: str = "whatsapp", db: Session = Depends(get_db)):
+    """Processa resposta com endereço da wallet"""
     try:
         purchase_manager = PurchaseManager(db)
-        response = purchase_manager.process_wallet_address_response(phone_number, sms_message)
+        response = purchase_manager.process_wallet_address_response(phone_number, message, method)
         return response
     except Exception as e:
-        atm_logger.log_error('api', 'process_wallet_address_response_error', {
+        atm_logger.log_system('api', 'process_wallet_address_response_communication_error', {
             'phone_number': phone_number,
+            'method': method,
             'error': str(e)
         })
         raise HTTPException(status_code=400, detail=str(e))
@@ -262,3 +266,17 @@ async def get_quote_legacy(crypto_type: str, amount_ars: float):
             'error': str(e)
         })
         raise HTTPException(status_code=400, detail=str(e))
+
+# Endpoint para obter estatísticas de comunicação
+@router.get("/communication/stats")
+async def get_communication_stats():
+    """Obtém estatísticas dos sistemas de comunicação"""
+    try:
+        from app.core.communication_manager import communication_manager
+        stats = communication_manager.get_system_stats()
+        return stats
+    except Exception as e:
+        atm_logger.log_system('api', 'get_communication_stats_error', {
+            'error': str(e)
+        })
+        raise HTTPException(status_code=500, detail=str(e))
