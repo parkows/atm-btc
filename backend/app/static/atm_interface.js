@@ -5,6 +5,7 @@ let selectedCrypto = null;
 let selectedSaleCrypto = null;
 let currentPhone = null;
 let currentMethod = null;
+let detectedAmount = 0;
 
 // API Base URL
 const API_BASE = 'http://localhost:8000';
@@ -35,6 +36,13 @@ function goBack() {
         document.getElementById('mainScreen').style.display = 'block';
         document.getElementById('backButton').style.display = 'none';
     }
+}
+
+function goToMain() {
+    document.getElementById('purchaseForm').style.display = 'none';
+    document.getElementById('saleForm').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'block';
+    document.getElementById('backButton').style.display = 'none';
 }
 
 // Funções de compra
@@ -107,6 +115,18 @@ function verifyCode() {
 function selectCrypto(crypto) {
     selectedCrypto = crypto;
     
+    // Atualizar informações da rede
+    const networkInfo = document.getElementById('walletNetworkInfo');
+    const methodInfo = document.getElementById('walletMethodInfo');
+    
+    if (crypto === 'BTC') {
+        networkInfo.textContent = 'Rede Lightning Network';
+    } else {
+        networkInfo.textContent = 'Rede TRC20';
+    }
+    
+    methodInfo.textContent = selectedCommunication === 'whatsapp' ? 'WhatsApp' : 'SMS';
+    
     showStatus('purchaseStatus', `${crypto} selecionado`, 'success');
     
     setTimeout(() => {
@@ -115,26 +135,49 @@ function selectCrypto(crypto) {
     }, 1000);
 }
 
-function requestWalletAddress() {
-    const amount = document.getElementById('purchaseAmount').value;
+function confirmWalletAddress() {
+    const walletAddress = document.getElementById('walletAddress').value.trim();
     
-    if (!amount || amount < 10000 || amount > 250000) {
-        showStatus('purchaseStatus', 'Por favor, digite um valor entre $10,000 e $250,000 ARS', 'error');
+    if (!walletAddress) {
+        showStatus('purchaseStatus', 'Por favor, digite qualquer texto para continuar', 'error');
         return;
     }
     
-    // Simular solicitação de endereço
-    showStatus('purchaseStatus', `Solicitando endereço da wallet ${selectedCrypto}...`, 'info');
+    showStatus('purchaseStatus', 'Carteira confirmada!', 'success');
     
-    // Simular resposta do usuário
     setTimeout(() => {
-        showStatus('purchaseStatus', `Endereço recebido! Compra de ${selectedCrypto} por $${amount} ARS criada com sucesso!`, 'success');
+        currentStep = 6;
+        showPurchaseStep(6);
+    }, 1000);
+}
+
+function confirmCashInsertion() {
+    // Simular detecção de valor
+    detectedAmount = Math.floor(Math.random() * 90000) + 10000; // $10,000 - $100,000
+    
+    document.getElementById('detectedAmount').textContent = `$${detectedAmount.toLocaleString()}`;
+    
+    showStatus('purchaseStatus', 'Valor detectado!', 'success');
+    
+    setTimeout(() => {
+        currentStep = 7;
+        showPurchaseStep(7);
+    }, 1000);
+}
+
+function confirmAmount() {
+    showStatus('purchaseStatus', 'Valor confirmado! Processando...', 'success');
+    
+    setTimeout(() => {
+        currentStep = 8;
+        showPurchaseStep(8);
         
-        // Simular criação da compra
+        // Simular processamento por 5 segundos
         setTimeout(() => {
-            showStatus('purchaseStatus', 'Compra finalizada! Verifique seu telefone para mais detalhes.', 'success');
-        }, 2000);
-    }, 2000);
+            currentStep = 9;
+            showPurchaseStep(9);
+        }, 5000);
+    }, 1000);
 }
 
 // Funções de venda
@@ -149,7 +192,7 @@ function selectSaleCrypto(crypto) {
     }, 1000);
 }
 
-function createSaleSession() {
+function showSaleInfo() {
     const amount = document.getElementById('saleAmount').value;
     
     if (!amount || amount < 10000 || amount > 250000) {
@@ -157,23 +200,53 @@ function createSaleSession() {
         return;
     }
     
-    // Simular criação de sessão de venda
-    showStatus('saleStatus', `Criando sessão de venda de ${selectedSaleCrypto}...`, 'info');
+    // Simular dados da operação
+    const cryptoAmount = (amount * 0.92 / 50000).toFixed(6); // Simular cotação
+    const quote = 50000; // Simular cotação BTC
+    const fee = selectedSaleCrypto === 'BTC' ? '8%' : '6%';
+    
+    // Atualizar informações
+    document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
+    document.getElementById('saleCryptoInfo').textContent = selectedSaleCrypto;
+    document.getElementById('saleCryptoAmount').textContent = `${cryptoAmount} ${selectedSaleCrypto}`;
+    document.getElementById('saleQuoteInfo').textContent = `$${quote.toLocaleString()}`;
+    document.getElementById('saleFeeInfo').textContent = fee;
+    
+    showStatus('saleStatus', 'Informações calculadas!', 'success');
     
     setTimeout(() => {
-        showStatus('saleStatus', `Sessão de venda criada! QR Code gerado para ${selectedSaleCrypto} por $${amount} ARS`, 'success');
-        
-        // Simular QR Code
-        setTimeout(() => {
-            showStatus('saleStatus', 'Aguardando pagamento... Verifique o QR Code no ATM', 'info');
-        }, 1000);
-    }, 2000);
+        document.getElementById('saleStep2').classList.add('hidden');
+        document.getElementById('saleStep3').classList.remove('hidden');
+    }, 1000);
+}
+
+function goBackToSaleAmount() {
+    document.getElementById('saleStep3').classList.add('hidden');
+    document.getElementById('saleStep2').classList.remove('hidden');
+}
+
+function showQRCode() {
+    showStatus('saleStatus', 'QR Code gerado!', 'success');
+    
+    setTimeout(() => {
+        document.getElementById('saleStep3').classList.add('hidden');
+        document.getElementById('saleStep4').classList.remove('hidden');
+    }, 1000);
+}
+
+function confirmPayment() {
+    showStatus('saleStatus', 'Pagamento confirmado!', 'success');
+    
+    setTimeout(() => {
+        document.getElementById('saleStep4').classList.add('hidden');
+        document.getElementById('saleStep5').classList.remove('hidden');
+    }, 1000);
 }
 
 // Funções auxiliares
 function showPurchaseStep(step) {
     // Esconder todos os passos
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 9; i++) {
         const stepElement = document.getElementById(`purchaseStep${i}`);
         if (stepElement) {
             stepElement.classList.add('hidden');
@@ -193,11 +266,12 @@ function resetPurchaseForm() {
     selectedCrypto = null;
     currentPhone = null;
     currentMethod = null;
+    detectedAmount = 0;
     
     // Limpar campos
     document.getElementById('purchasePhone').value = '';
     document.getElementById('verificationCode').value = '';
-    document.getElementById('purchaseAmount').value = '';
+    document.getElementById('walletAddress').value = '';
     
     // Remover seleções
     document.querySelectorAll('.comm-option').forEach(option => {
@@ -226,6 +300,9 @@ function resetSaleForm() {
     // Mostrar primeiro passo
     document.getElementById('saleStep1').classList.remove('hidden');
     document.getElementById('saleStep2').classList.add('hidden');
+    document.getElementById('saleStep3').classList.add('hidden');
+    document.getElementById('saleStep4').classList.add('hidden');
+    document.getElementById('saleStep5').classList.add('hidden');
 }
 
 function showStatus(elementId, message, type) {
@@ -271,15 +348,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    document.getElementById('purchaseAmount').addEventListener('keypress', function(e) {
+    document.getElementById('walletAddress').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            requestWalletAddress();
+            confirmWalletAddress();
         }
     });
     
     document.getElementById('saleAmount').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            createSaleSession();
+            showSaleInfo();
         }
     });
 }); 

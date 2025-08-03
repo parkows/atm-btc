@@ -230,6 +230,64 @@
         .hidden {
             display: none !important;
         }
+        
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .operation-info {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--liquid-gold);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .success-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .success-icon {
+            font-size: 5rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--liquid-gold);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -338,7 +396,7 @@
                                 <i class="fab fa-bitcoin"></i>
                             </div>
                             <div class="action-title">Bitcoin (BTC)</div>
-                            <div class="action-description">Taxa: 6%</div>
+                            <div class="action-description">Rede Lightning Network</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -347,22 +405,77 @@
                                 <i class="fas fa-dollar-sign"></i>
                             </div>
                             <div class="action-title">USDT</div>
-                            <div class="action-description">Taxa: 4%</div>
+                            <div class="action-description">Rede TRC20</div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Passo 5: Valor -->
+            <!-- Passo 5: Solicitar carteira -->
             <div id="purchaseStep5" class="hidden">
-                <h4 class="text-center mb-4">Digite o valor em pesos argentinos</h4>
+                <h4 class="text-center mb-4">Envie sua carteira para recebimento</h4>
                 <div class="mb-3">
-                    <input type="number" class="form-control" id="purchaseAmount" placeholder="50000" min="10000" max="250000">
-                    <small class="text-muted">Limite: $10,000 - $250,000 ARS</small>
+                    <p class="text-center">
+                        <strong id="walletNetworkInfo">Rede Lightning Network</strong><br>
+                        Envie sua carteira via <strong id="walletMethodInfo">WhatsApp</strong>
+                    </p>
+                    <input type="text" class="form-control" id="walletAddress" placeholder="Digite qualquer texto para continuar">
+                    <small class="text-muted">Para testes, digite qualquer texto</small>
                 </div>
                 <div class="text-center">
-                    <button class="btn btn-liquid" onclick="requestWalletAddress()">
-                        Solicitar Endereço
+                    <button class="btn btn-liquid" onclick="confirmWalletAddress()">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Passo 6: Inserir notas -->
+            <div id="purchaseStep6" class="hidden">
+                <h4 class="text-center mb-4">Insira as notas no caixa</h4>
+                <div class="text-center">
+                    <div class="action-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <p>Insira as notas físicas no caixa ATM</p>
+                    <button class="btn btn-liquid" onclick="confirmCashInsertion()">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Passo 7: Confirmar valor -->
+            <div id="purchaseStep7" class="hidden">
+                <h4 class="text-center mb-4">Confirmar valor depositado</h4>
+                <div class="mb-3">
+                    <p class="text-center">Valor detectado: <strong id="detectedAmount">$0</strong></p>
+                    <p class="text-center">Confirma este valor?</p>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-liquid" onclick="confirmAmount()">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Passo 8: Processando -->
+            <div id="purchaseStep8" class="hidden">
+                <h4 class="text-center mb-4">Processando transação</h4>
+                <div class="text-center">
+                    <div class="loading-spinner"></div>
+                    <p>Os fundos estão sendo transferidos...</p>
+                </div>
+            </div>
+            
+            <!-- Passo 9: Concluído -->
+            <div id="purchaseStep9" class="hidden">
+                <div class="success-screen">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Compra Concluída!</h3>
+                    <p>Seus fundos foram transferidos com sucesso.</p>
+                    <button class="btn btn-liquid" onclick="goToMain()">
+                        Voltar ao Início
                     </button>
                 </div>
             </div>
@@ -385,7 +498,7 @@
                                 <i class="fab fa-bitcoin"></i>
                             </div>
                             <div class="action-title">Bitcoin (BTC)</div>
-                            <div class="action-description">Taxa: 8%</div>
+                            <div class="action-description">Rede Lightning Network</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -394,7 +507,7 @@
                                 <i class="fas fa-dollar-sign"></i>
                             </div>
                             <div class="action-title">USDT</div>
-                            <div class="action-description">Taxa: 6%</div>
+                            <div class="action-description">Rede TRC20</div>
                         </div>
                     </div>
                 </div>
@@ -408,8 +521,71 @@
                     <small class="text-muted">Limite: $10,000 - $250,000 ARS</small>
                 </div>
                 <div class="text-center">
-                    <button class="btn btn-liquid" onclick="createSaleSession()">
-                        Criar Sessão de Venda
+                    <button class="btn btn-liquid" onclick="showSaleInfo()">
+                        Continuar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Informações da venda -->
+            <div id="saleStep3" class="hidden">
+                <h4 class="text-center mb-4">Informações da Operação</h4>
+                <div class="operation-info">
+                    <div class="info-row">
+                        <span>Valor a sacar:</span>
+                        <span id="saleAmountInfo">$0 ARS</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Criptomoeda:</span>
+                        <span id="saleCryptoInfo">BTC</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Quantidade:</span>
+                        <span id="saleCryptoAmount">0 BTC</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Cotação atual:</span>
+                        <span id="saleQuoteInfo">$0</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Taxa:</span>
+                        <span id="saleFeeInfo">0%</span>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-secondary" onclick="goBackToSaleAmount()">
+                        Voltar
+                    </button>
+                    <button class="btn btn-liquid" onclick="showQRCode()">
+                        Continuar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- QR Code -->
+            <div id="saleStep4" class="hidden">
+                <h4 class="text-center mb-4">Escaneie o QR Code</h4>
+                <div class="text-center">
+                    <div class="qr-code">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMwMDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZha2UgUVIgQ29kZTwvdGV4dD48L3N2Zz4=" alt="QR Code">
+                    </div>
+                    <p>Escaneie o QR Code para realizar o pagamento</p>
+                    <button class="btn btn-liquid" onclick="confirmPayment()">
+                        Continuar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Venda concluída -->
+            <div id="saleStep5" class="hidden">
+                <div class="success-screen">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Venda Concluída!</h3>
+                    <p>Sua criptomoeda foi vendida com sucesso.</p>
+                    <button class="btn btn-liquid" onclick="goToMain()">
+                        Voltar ao Início
                     </button>
                 </div>
             </div>
