@@ -136,14 +136,8 @@ function selectCrypto(crypto) {
 }
 
 function confirmWalletAddress() {
-    const walletAddress = document.getElementById('walletAddress').value.trim();
-    
-    if (!walletAddress) {
-        showStatus('purchaseStatus', 'Por favor, digite qualquer texto para continuar', 'error');
-        return;
-    }
-    
-    showStatus('purchaseStatus', 'Carteira confirmada!', 'success');
+    // Simular recebimento da carteira do cliente
+    showStatus('purchaseStatus', 'Carteira recebida e confirmada!', 'success');
     
     setTimeout(() => {
         currentStep = 6;
@@ -205,14 +199,26 @@ async function showSaleInfo() {
     try {
         // Calcular com cotações reais
         const calculation = await calculateWithRealQuotes(selectedSaleCrypto, parseInt(amount));
-        const fee = selectedSaleCrypto === 'BTC' ? '8%' : '6%';
+        
+        // Calcular valor nominal da taxa
+        const feePercentage = selectedSaleCrypto === 'BTC' ? 0.08 : 0.06;
+        const feeAmount = parseInt(amount) * feePercentage;
+        const feeFormatted = `$${feeAmount.toLocaleString()} ARS`;
+        
+        console.log('Debug - Taxa:', {
+            crypto: selectedSaleCrypto,
+            amount: amount,
+            feePercentage: feePercentage,
+            feeAmount: feeAmount,
+            feeFormatted: feeFormatted
+        });
         
         // Atualizar informações
         document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
         document.getElementById('saleCryptoInfo').textContent = selectedSaleCrypto;
         document.getElementById('saleCryptoAmount').textContent = `${calculation.cryptoAmount} ${selectedSaleCrypto}`;
         document.getElementById('saleQuoteInfo').textContent = calculation.formattedQuote;
-        document.getElementById('saleFeeInfo').textContent = fee;
+        document.getElementById('saleFeeInfo').textContent = feeFormatted;
         
         showStatus('saleStatus', 'Informações calculadas com cotações reais!', 'success');
         
@@ -228,13 +234,17 @@ async function showSaleInfo() {
         // Fallback com valores simulados
         const cryptoAmount = (amount * 0.92 / 50000).toFixed(6);
         const quote = 50000;
-        const fee = selectedSaleCrypto === 'BTC' ? '8%' : '6%';
+        
+        // Calcular valor nominal da taxa para fallback
+        const feePercentage = selectedSaleCrypto === 'BTC' ? 0.08 : 0.06;
+        const feeAmount = parseInt(amount) * feePercentage;
+        const feeFormatted = `$${feeAmount.toLocaleString()} ARS`;
         
         document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
         document.getElementById('saleCryptoInfo').textContent = selectedSaleCrypto;
         document.getElementById('saleCryptoAmount').textContent = `${cryptoAmount} ${selectedSaleCrypto}`;
         document.getElementById('saleQuoteInfo').textContent = `$${quote.toLocaleString()}`;
-        document.getElementById('saleFeeInfo').textContent = fee;
+        document.getElementById('saleFeeInfo').textContent = feeFormatted;
         
         setTimeout(() => {
             document.getElementById('saleStep2').classList.add('hidden');
@@ -355,8 +365,8 @@ async function fetchRealTimeQuotes() {
         console.error('Erro ao buscar cotações:', error);
         // Fallback para cotações simuladas
         return {
-            'BTC': { price_ars: 50000, formatted: '$50,000.00 ARS' },
-            'USDT': { price_ars: 1000, formatted: '$1,000.00 ARS' }
+            'BTC': { price_usd: 113000, formatted: '$113,000.00 USD' },
+            'USDT': { price_ars: 1350, formatted: '$1,350.00 ARS' }
         };
     }
 }
@@ -368,31 +378,52 @@ async function calculateWithRealQuotes(crypto, amount) {
         const quote = quotes[crypto];
         
         if (quote) {
-            const cryptoAmount = (amount * 0.92) / quote.price_ars; // 8% taxa para venda
-            return {
-                cryptoAmount: cryptoAmount.toFixed(6),
-                quotePrice: quote.price_ars,
-                formattedQuote: quote.formatted
-            };
+            if (crypto === 'BTC') {
+                // Para BTC, usar cotação em USD
+                const cryptoAmount = (amount * 0.92) / (quote.price_usd * 1350); // Converter USD para ARS
+                return {
+                    cryptoAmount: cryptoAmount.toFixed(6),
+                    quotePrice: quote.price_usd,
+                    formattedQuote: quote.formatted
+                };
+            } else {
+                // Para USDT, usar cotação em ARS
+                const cryptoAmount = (amount * 0.92) / quote.price_ars;
+                return {
+                    cryptoAmount: cryptoAmount.toFixed(6),
+                    quotePrice: quote.price_ars,
+                    formattedQuote: quote.formatted
+                };
+            }
         }
     } catch (error) {
         console.error('Erro ao calcular com cotações reais:', error);
     }
     
     // Fallback
-    const fallbackPrice = crypto === 'BTC' ? 50000 : 1000;
-    const cryptoAmount = (amount * 0.92) / fallbackPrice;
-    return {
-        cryptoAmount: cryptoAmount.toFixed(6),
-        quotePrice: fallbackPrice,
-        formattedQuote: `$${fallbackPrice.toLocaleString()}.00 ARS`
-    };
+    if (crypto === 'BTC') {
+        const fallbackPrice = 113000; // USD
+        const cryptoAmount = (amount * 0.92) / (fallbackPrice * 1350);
+        return {
+            cryptoAmount: cryptoAmount.toFixed(6),
+            quotePrice: fallbackPrice,
+            formattedQuote: `$${fallbackPrice.toLocaleString()}.00 USD`
+        };
+    } else {
+        const fallbackPrice = 1350; // ARS
+        const cryptoAmount = (amount * 0.92) / fallbackPrice;
+        return {
+            cryptoAmount: cryptoAmount.toFixed(6),
+            quotePrice: fallbackPrice,
+            formattedQuote: `$${fallbackPrice.toLocaleString()}.00 ARS`
+        };
+    }
 }
 
 // Teste de API
 async function testAPI() {
     try {
-        const response = await fetch(`${API_BASE}/cryptos/supported`);
+        const response = await fetch(`${API_BASE}/api/atm/supported-cryptos`);
         const data = await response.json();
         console.log('API Test:', data);
     } catch (error) {
@@ -420,11 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    document.getElementById('walletAddress').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            confirmWalletAddress();
-        }
-    });
+    // Event listener removido pois não há mais campo de entrada para carteira
     
     document.getElementById('saleAmount').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {

@@ -46,6 +46,17 @@ class CryptoManager:
             }
         }
     
+    def get_btc_usd_quote(self) -> float:
+        """Obtém cotação BTC/USD do Binance"""
+        try:
+            response = requests.get(f"{self.binance_url}?symbol=BTCUSDT", timeout=5)
+            data = response.json()
+            price = float(data["price"])
+            return price
+        except Exception as e:
+            self.logger.log_system('crypto_manager', 'btc_usd_quote_error', {'error': str(e)})
+            raise Exception(f"Erro ao buscar cotação BTC/USD: {e}")
+    
     def get_btc_ars_quote(self) -> float:
         """Obtém cotação BTC/ARS do Bitso"""
         try:

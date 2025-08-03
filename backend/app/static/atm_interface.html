@@ -288,6 +288,57 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Estilos para animação de aguardando */
+        .waiting-animation {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--liquid-gold);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .waiting-text {
+            font-size: 1.2rem;
+            color: var(--liquid-gold);
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .dots-animation {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: var(--liquid-gold);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
     </style>
 </head>
 <body>
@@ -413,18 +464,26 @@
             
             <!-- Passo 5: Solicitar carteira -->
             <div id="purchaseStep5" class="hidden">
-                <h4 class="text-center mb-4">Envie sua carteira para recebimento</h4>
+                <h4 class="text-center mb-4">Aguardando carteira do cliente</h4>
                 <div class="mb-3">
                     <p class="text-center">
                         <strong id="walletNetworkInfo">Rede Lightning Network</strong><br>
                         Envie sua carteira via <strong id="walletMethodInfo">WhatsApp</strong>
                     </p>
-                    <input type="text" class="form-control" id="walletAddress" placeholder="Digite qualquer texto para continuar">
-                    <small class="text-muted">Para testes, digite qualquer texto</small>
+                    <div class="waiting-animation">
+                        <div class="loading-spinner"></div>
+                        <p class="waiting-text">Aguardando recebimento da carteira...</p>
+                        <div class="dots-animation">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                    <small class="text-muted">O cliente deve enviar a carteira via mensagem</small>
                 </div>
                 <div class="text-center">
                     <button class="btn btn-liquid" onclick="confirmWalletAddress()">
-                        Confirmar
+                        Confirmar Recebimento
                     </button>
                 </div>
             </div>
@@ -567,7 +626,7 @@
                 <h4 class="text-center mb-4">Escaneie o QR Code</h4>
                 <div class="text-center">
                     <div class="qr-code">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMwMDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZha2UgUVIgQ29kZTwvdGV4dD48L3N2Zz4=" alt="QR Code">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://liquidgold-atm.com/payment" alt="QR Code">
                     </div>
                     <p>Escaneie o QR Code para realizar o pagamento</p>
                     <button class="btn btn-liquid" onclick="confirmPayment()">
@@ -596,6 +655,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="atm_interface.js"></script>
+    <script src="atm_interface.js?v=1.1"></script>
 </body>
 </html> 

@@ -19,7 +19,7 @@ from ..core.crypto_manager import CryptoManager
 from ..core.logger import atm_logger
 from datetime import datetime
 
-router = APIRouter(prefix="/api/atm", tags=["ATM Operations"])
+router = APIRouter(tags=["ATM Operations"])
 
 # Instâncias globais
 crypto_manager = CryptoManager()
@@ -285,21 +285,21 @@ async def get_communication_stats():
 # Endpoint para cotações em tempo real
 @router.get("/quotes/real-time")
 async def get_real_time_quotes():
-    """Obtém cotações em tempo real de BTC e USDT"""
+    """Obtém cotações em tempo real de BTC (USD) e USDT (ARS)"""
     try:
         crypto_manager = CryptoManager()
         
         # Obter cotações
-        btc_ars = crypto_manager.get_btc_ars_quote()
+        btc_usd = crypto_manager.get_btc_usd_quote()
         usdt_ars = crypto_manager.get_usdt_ars_quote()
         
         return {
             'success': True,
             'quotes': {
                 'BTC': {
-                    'price_ars': btc_ars,
-                    'formatted': f"${btc_ars:,.2f} ARS",
-                    'source': 'Bitso API'
+                    'price_usd': btc_usd,
+                    'formatted': f"${btc_usd:,.2f} USD",
+                    'source': 'Binance API'
                 },
                 'USDT': {
                     'price_ars': usdt_ars,
