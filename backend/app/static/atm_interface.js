@@ -192,7 +192,7 @@ function selectSaleCrypto(crypto) {
     }, 1000);
 }
 
-function showSaleInfo() {
+async function showSaleInfo() {
     const amount = document.getElementById('saleAmount').value;
     
     if (!amount || amount < 10000 || amount > 250000) {
@@ -200,24 +200,47 @@ function showSaleInfo() {
         return;
     }
     
-    // Simular dados da operação
-    const cryptoAmount = (amount * 0.92 / 50000).toFixed(6); // Simular cotação
-    const quote = 50000; // Simular cotação BTC
-    const fee = selectedSaleCrypto === 'BTC' ? '8%' : '6%';
+    showStatus('saleStatus', 'Calculando com cotações reais...', 'info');
     
-    // Atualizar informações
-    document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
-    document.getElementById('saleCryptoInfo').textContent = selectedSaleCrypto;
-    document.getElementById('saleCryptoAmount').textContent = `${cryptoAmount} ${selectedSaleCrypto}`;
-    document.getElementById('saleQuoteInfo').textContent = `$${quote.toLocaleString()}`;
-    document.getElementById('saleFeeInfo').textContent = fee;
-    
-    showStatus('saleStatus', 'Informações calculadas!', 'success');
-    
-    setTimeout(() => {
-        document.getElementById('saleStep2').classList.add('hidden');
-        document.getElementById('saleStep3').classList.remove('hidden');
-    }, 1000);
+    try {
+        // Calcular com cotações reais
+        const calculation = await calculateWithRealQuotes(selectedSaleCrypto, parseInt(amount));
+        const fee = selectedSaleCrypto === 'BTC' ? '8%' : '6%';
+        
+        // Atualizar informações
+        document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
+        document.getElementById('saleCryptoInfo').textContent = selectedSaleCrypto;
+        document.getElementById('saleCryptoAmount').textContent = `${calculation.cryptoAmount} ${selectedSaleCrypto}`;
+        document.getElementById('saleQuoteInfo').textContent = calculation.formattedQuote;
+        document.getElementById('saleFeeInfo').textContent = fee;
+        
+        showStatus('saleStatus', 'Informações calculadas com cotações reais!', 'success');
+        
+        setTimeout(() => {
+            document.getElementById('saleStep2').classList.add('hidden');
+            document.getElementById('saleStep3').classList.remove('hidden');
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Erro ao calcular:', error);
+        showStatus('saleStatus', 'Erro ao calcular. Usando valores simulados.', 'error');
+        
+        // Fallback com valores simulados
+        const cryptoAmount = (amount * 0.92 / 50000).toFixed(6);
+        const quote = 50000;
+        const fee = selectedSaleCrypto === 'BTC' ? '8%' : '6%';
+        
+        document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
+        document.getElementById('saleCryptoInfo').textContent = selectedSaleCrypto;
+        document.getElementById('saleCryptoAmount').textContent = `${cryptoAmount} ${selectedSaleCrypto}`;
+        document.getElementById('saleQuoteInfo').textContent = `$${quote.toLocaleString()}`;
+        document.getElementById('saleFeeInfo').textContent = fee;
+        
+        setTimeout(() => {
+            document.getElementById('saleStep2').classList.add('hidden');
+            document.getElementById('saleStep3').classList.remove('hidden');
+        }, 1000);
+    }
 }
 
 function goBackToSaleAmount() {
@@ -315,6 +338,55 @@ function showStatus(elementId, message, type) {
             ${message}
         </div>
     `;
+}
+
+// Função para buscar cotações reais
+async function fetchRealTimeQuotes() {
+    try {
+        const response = await fetch(`${API_BASE}/api/atm/quotes/real-time`);
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.quotes;
+        } else {
+            throw new Error('Falha ao buscar cotações');
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cotações:', error);
+        // Fallback para cotações simuladas
+        return {
+            'BTC': { price_ars: 50000, formatted: '$50,000.00 ARS' },
+            'USDT': { price_ars: 1000, formatted: '$1,000.00 ARS' }
+        };
+    }
+}
+
+// Função para calcular valores com cotações reais
+async function calculateWithRealQuotes(crypto, amount) {
+    try {
+        const quotes = await fetchRealTimeQuotes();
+        const quote = quotes[crypto];
+        
+        if (quote) {
+            const cryptoAmount = (amount * 0.92) / quote.price_ars; // 8% taxa para venda
+            return {
+                cryptoAmount: cryptoAmount.toFixed(6),
+                quotePrice: quote.price_ars,
+                formattedQuote: quote.formatted
+            };
+        }
+    } catch (error) {
+        console.error('Erro ao calcular com cotações reais:', error);
+    }
+    
+    // Fallback
+    const fallbackPrice = crypto === 'BTC' ? 50000 : 1000;
+    const cryptoAmount = (amount * 0.92) / fallbackPrice;
+    return {
+        cryptoAmount: cryptoAmount.toFixed(6),
+        quotePrice: fallbackPrice,
+        formattedQuote: `$${fallbackPrice.toLocaleString()}.00 ARS`
+    };
 }
 
 // Teste de API

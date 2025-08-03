@@ -69,6 +69,12 @@ async def get_atm_interface_js():
     """JavaScript da interface do ATM"""
     return FileResponse("app/static/atm_interface.js")
 
+# Rota de teste
+@app.get("/test")
+async def get_test():
+    """Página de teste"""
+    return FileResponse("test_interface.html")
+
 # Background tasks
 def health_check_task():
     """Tarefa em background para verificação de saúde do sistema"""

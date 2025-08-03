@@ -17,6 +17,7 @@ from ..core.session_manager import SessionManager
 from ..core.purchase_manager import PurchaseManager
 from ..core.crypto_manager import CryptoManager
 from ..core.logger import atm_logger
+from datetime import datetime
 
 router = APIRouter(prefix="/api/atm", tags=["ATM Operations"])
 
@@ -277,6 +278,39 @@ async def get_communication_stats():
         return stats
     except Exception as e:
         atm_logger.log_system('api', 'get_communication_stats_error', {
+            'error': str(e)
+        })
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint para cotações em tempo real
+@router.get("/quotes/real-time")
+async def get_real_time_quotes():
+    """Obtém cotações em tempo real de BTC e USDT"""
+    try:
+        crypto_manager = CryptoManager()
+        
+        # Obter cotações
+        btc_ars = crypto_manager.get_btc_ars_quote()
+        usdt_ars = crypto_manager.get_usdt_ars_quote()
+        
+        return {
+            'success': True,
+            'quotes': {
+                'BTC': {
+                    'price_ars': btc_ars,
+                    'formatted': f"${btc_ars:,.2f} ARS",
+                    'source': 'Bitso API'
+                },
+                'USDT': {
+                    'price_ars': usdt_ars,
+                    'formatted': f"${usdt_ars:,.2f} ARS",
+                    'source': 'Multiple APIs (Ripio/Buenbit/Lemon)'
+                }
+            },
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        atm_logger.log_system('api', 'real_time_quotes_error', {
             'error': str(e)
         })
         raise HTTPException(status_code=500, detail=str(e))

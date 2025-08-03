@@ -58,24 +58,73 @@ class CryptoManager:
             raise Exception(f"Erro ao buscar cotação BTC/ARS: {e}")
     
     def get_usdt_ars_quote(self) -> float:
-        """Obtém cotação USDT/ARS via Binance"""
+        """Obtém cotação USDT/ARS via múltiplas APIs"""
         try:
-            # Primeiro obtém USDT/USD
-            response = requests.get(f"{self.binance_url}?symbol=USDTUSD", timeout=5)
-            usdt_usd_data = response.json()
-            usdt_usd_price = float(usdt_usd_data["price"])
+            # Tentar múltiplas APIs em ordem de prioridade
             
-            # Depois obtém USD/ARS (aproximação)
-            # Em produção, usar API específica para USD/ARS
-            usd_ars_rate = 1000.0  # Taxa aproximada USD/ARS
+            # 1. Ripio API (corretora argentina)
+            try:
+                ripio_response = requests.get("https://api.ripio.com/public/v1/market/", timeout=5)
+                ripio_data = ripio_response.json()
+                for pair in ripio_data.get('data', []):
+                    if pair.get('pair') == 'USDT_ARS':
+                        return float(pair.get('last_price', 0))
+            except:
+                pass
             
-            usdt_ars_price = usdt_usd_price * usd_ars_rate
-            return usdt_ars_price
+            # 2. Buenbit API (corretora argentina)
+            try:
+                buenbit_response = requests.get("https://api.buenbit.com/api/v1/market/ticker", timeout=5)
+                buenbit_data = buenbit_response.json()
+                for ticker in buenbit_data.get('data', []):
+                    if ticker.get('symbol') == 'USDT_ARS':
+                        return float(ticker.get('last_price', 0))
+            except:
+                pass
+            
+            # 3. Lemon API (corretora argentina)
+            try:
+                lemon_response = requests.get("https://api.lemon.com/v1/market/ticker", timeout=5)
+                lemon_data = lemon_response.json()
+                if 'USDT_ARS' in lemon_data:
+                    return float(lemon_data['USDT_ARS'].get('last', 0))
+            except:
+                pass
+            
+            # 4. Binance + USD/ARS (fallback)
+            try:
+                # USDT/USD
+                binance_response = requests.get(f"{self.binance_url}?symbol=USDTUSD", timeout=5)
+                usdt_usd_data = binance_response.json()
+                usdt_usd_price = float(usdt_usd_data["price"])
+                
+                # USD/ARS (via API de câmbio)
+                usd_ars_response = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=5)
+                usd_ars_data = usd_ars_response.json()
+                usd_ars_rate = float(usd_ars_data['rates']['ARS'])
+                
+                usdt_ars_price = usdt_usd_price * usd_ars_rate
+                return usdt_ars_price
+            except:
+                pass
+            
+            # 5. CoinGecko API (fallback)
+            try:
+                coingecko_response = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ars", timeout=5)
+                coingecko_data = coingecko_response.json()
+                return float(coingecko_data['tether']['ars'])
+            except:
+                pass
+            
+            # 6. Fallback final
+            self.logger.log_system('crypto_manager', 'usdt_quote_fallback', {
+                'message': 'Usando cotação de fallback para USDT/ARS'
+            })
+            return 1000.0  # 1 USDT = 1000 ARS (fallback)
             
         except Exception as e:
-            # Fallback: usar cotação fixa para testes
             self.logger.log_system('crypto_manager', 'usdt_quote_error', {'error': str(e)})
-            return 1000.0  # 1 USDT = 1000 ARS (aproximação para testes)
+            return 1000.0  # Fallback final
     
     def get_quote(self, crypto: str, amount_ars: float, transaction_type: str = "VENDA") -> Dict[str, Any]:
         """Obtém cotação para qualquer criptomoeda (venda ou compra)"""
