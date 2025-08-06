@@ -18,6 +18,12 @@ O **LiquidGold ATM** é um sistema completo de ATM (Automated Teller Machine) qu
 - **🎨 Interface Moderna:** Design preto e dourado da empresa
 - **📱 Responsivo:** Funciona em desktop e mobile
 - **🌍 Internacionalização:** Suporte a múltiplos idiomas
+- **🚀 Alta Performance:** Sistema de cache com Redis
+- **🔐 Autenticação JWT:** Segurança para API administrativa
+- **🛡️ Proteção contra Ataques:** Limitação de taxa de requisições
+- **📝 Auditoria Completa:** Registro de todas as ações do sistema
+- **💾 Backup Automático:** Proteção de dados com políticas de retenção
+- **🐳 Containerização:** Suporte a Docker para fácil implantação
 
 ## 🚀 **FUNCIONALIDADES**
 
@@ -78,16 +84,29 @@ O **LiquidGold ATM** é um sistema completo de ATM (Automated Teller Machine) qu
 backend/
 ├── app/
 │   ├── api/           # Endpoints da API
+│   │   ├── auth.py            # Autenticação
+│   │   └── backup.py          # Gerenciamento de backups
 │   ├── core/          # Lógica de negócio
 │   │   ├── crypto_manager.py      # Gerenciamento de criptos
 │   │   ├── session_manager.py     # Gerenciamento de vendas
-│   │   └── purchase_manager.py    # Gerenciamento de compras
+│   │   ├── purchase_manager.py    # Gerenciamento de compras
+│   │   ├── auth.py                # Autenticação JWT
+│   │   ├── cache_manager.py       # Cache com Redis
+│   │   ├── rate_limiter.py        # Limitação de requisições
+│   │   ├── audit.py               # Auditoria de segurança
+│   │   └── backup_manager.py      # Backup automático
+│   ├── middleware/     # Middlewares
+│   │   ├── rate_limit_middleware.py  # Limitação de taxa
+│   │   └── audit_middleware.py       # Auditoria
+│   ├── db/             # Banco de dados
+│   │   └── init_db.py             # Inicialização do BD
 │   ├── static/        # Interface web
 │   ├── models.py      # Modelos de dados
 │   └── schemas.py     # Schemas de validação
 ├── config/            # Configurações
 ├── logs/              # Logs do sistema
 ├── reports/           # Relatórios
+├── backups/           # Backups do sistema
 └── translations/      # Traduções
 ```
 
@@ -143,6 +162,26 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
 
 # Abra no navegador
 open http://127.0.0.1:8080/admin
+```
+
+#### **Opção C: Docker (Produção)**
+```bash
+# Construa e inicie os contêineres
+cd backend
+docker-compose up -d
+
+# Verifique os logs
+docker-compose logs -f app
+
+# Acesse no navegador
+open http://localhost:8000/admin
+```
+
+#### **Opção D: Servidor de Produção**
+```bash
+# Execute com Gunicorn e workers Uvicorn
+cd backend
+python run_production.py --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 ## 🎮 **COMO USAR**
@@ -309,6 +348,12 @@ python test_complete_system.py
 - 🔍 Logs de auditoria
 - ⚠️ Alertas automáticos
 - 🔄 Backup automático
+- 🔑 Autenticação JWT para API administrativa
+- 🛑 Limitação de taxa de requisições (rate limiting)
+- 📊 Auditoria completa de todas as ações
+- 🔒 Proteção contra ataques de força bruta
+- 🔄 Cache com Redis para melhor performance
+- 📝 Registro detalhado de eventos de segurança
 
 ### **Arquivos Protegidos**
 - `.env` - Variáveis de ambiente
@@ -342,11 +387,20 @@ PUT /api/config
 liquidgold-atm/
 ├── backend/                 # Backend Python
 │   ├── app/                # Aplicação principal
+│   │   ├── api/           # Endpoints da API
+│   │   ├── core/          # Lógica de negócio
+│   │   ├── middleware/    # Middlewares
+│   │   └── db/            # Banco de dados
 │   ├── config/             # Configurações
 │   ├── logs/               # Logs
 │   ├── reports/            # Relatórios
+│   ├── backups/            # Backups do sistema
 │   ├── tests/              # Testes
-│   └── translations/       # Traduções
+│   ├── translations/       # Traduções
+│   ├── Dockerfile          # Configuração Docker
+│   ├── docker-compose.yml  # Orquestração de contêineres
+│   ├── run_production.py   # Script para produção
+│   └── maintenance.py      # Script de manutenção
 ├── frontend/               # Frontend (legado)
 ├── dist/                   # Executáveis
 ├── docs/                   # Documentação
@@ -394,7 +448,13 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 - ✅ **Monitoramento:** Implementado
 - ✅ **Segurança:** Validado
 - ✅ **Funcionalidade de Compra:** Implementada
+- ✅ **Containerização:** Docker implementado
+- ✅ **Cache:** Sistema de cache com Redis
+- ✅ **Autenticação:** JWT para API administrativa
+- ✅ **Auditoria:** Sistema completo de logs de auditoria
+- ✅ **Backup:** Sistema automático com políticas de retenção
+- ✅ **Rate Limiting:** Proteção contra ataques de força bruta
 
 ---
 
-**LiquidGold ATM** - Transformando a forma como as pessoas interagem com criptomoedas! 🚀 
+**LiquidGold ATM** - Transformando a forma como as pessoas interagem com criptomoedas! 🚀

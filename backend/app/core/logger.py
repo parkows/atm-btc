@@ -106,6 +106,16 @@ class ATMLogger:
             'timestamp': datetime.utcnow().isoformat()
         }
         self.security_logger.warning(json.dumps(log_entry))
+    
+    def log_error(self, component: str, error_type: str, details: Dict[str, Any]):
+        """Log de erros do sistema"""
+        log_entry = {
+            'component': component,
+            'error_type': error_type,
+            'details': details,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        self.system_logger.error(json.dumps(log_entry))
 
 # Instância global do logger
 atm_logger = ATMLogger() 

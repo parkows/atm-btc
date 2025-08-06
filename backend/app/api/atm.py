@@ -22,7 +22,7 @@ from datetime import datetime
 router = APIRouter(tags=["ATM Operations"])
 
 # Instâncias globais
-crypto_manager = CryptoManager()
+from ..core.crypto_manager import crypto_manager
 
 @router.get("/supported-cryptos", response_model=SupportedCryptosResponse)
 async def get_supported_cryptos():

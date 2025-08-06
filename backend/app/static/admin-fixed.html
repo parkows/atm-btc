@@ -287,7 +287,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showSection('health')">
-                            <i class="fas fa-heartbeat"></i> Sistema
+                            <i class="fas fa-heartbeat"></i> Saúde do Sistema
                         </a>
                     </li>
                     <li class="nav-item">
@@ -298,11 +298,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showSection('reports')">
                             <i class="fas fa-chart-bar"></i> Relatórios
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSection('accounting')">
-                            <i class="fas fa-calculator"></i> Contabilidade
                         </a>
                     </li>
                     <li class="nav-item">
@@ -460,7 +455,7 @@
 
                     <!-- Health Section -->
                     <div id="health-section" class="section" style="display: none;">
-                        <h2><i class="fas fa-heartbeat"></i> Sistema</h2>
+                        <h2><i class="fas fa-heartbeat"></i> Saúde do Sistema</h2>
                         
                         <div class="row mb-4">
                             <div class="col-md-6">
@@ -483,21 +478,6 @@
                                     <div class="card-body">
                                         <div id="system-metrics">
                                             <!-- Métricas serão carregadas aqui -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Limites Diários</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div id="daily-limits">
-                                            <!-- Limites diários serão carregados aqui -->
                                         </div>
                                     </div>
                                 </div>
@@ -660,14 +640,6 @@
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <button class="btn btn-warning" onclick="testGenerateReport()">
-                                    <i class="fas fa-bug"></i> Testar Relatório Diário
-                                </button>
-                            </div>
-                        </div>
-                        
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="card">
@@ -687,52 +659,6 @@
                         </div>
                     </div>
 
-                    <!-- Accounting Section -->
-                    <div id="accounting-section" class="section" style="display: none;">
-                        <h2><i class="fas fa-calculator"></i> Contabilidade</h2>
-                        
-                        <div class="row mb-4">
-                            <div class="col-md-3">
-                                <button class="btn btn-primary w-100" onclick="generateAccountingReport('daily')">
-                                    <i class="fas fa-calendar-day"></i> Diário
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-primary w-100" onclick="generateAccountingReport('weekly')">
-                                    <i class="fas fa-calendar-week"></i> Semanal
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-primary w-100" onclick="generateAccountingReport('monthly')">
-                                    <i class="fas fa-calendar-alt"></i> Mensal
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-primary w-100" onclick="generateAccountingReport('yearly')">
-                                    <i class="fas fa-calendar"></i> Anual
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Relatório Contábil</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div id="accounting-content">
-                                            <!-- Conteúdo contábil será carregado aqui -->
-                                            <div class="alert alert-info">
-                                                Selecione um período acima para gerar o relatório contábil.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Security Section -->
                     <div id="security-section" class="section" style="display: none;">
                         <h2><i class="fas fa-shield-alt"></i> Segurança</h2>
@@ -744,36 +670,28 @@
                                         <h5 class="mb-0">Configurações de Segurança</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="security-config-form">
+                                        <form>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="require-kyc" name="require-kyc" checked>
-                                                <label class="form-check-label" for="require-kyc">Exigir KYC</label>
+                                                <input class="form-check-input" type="checkbox" id="2fa" checked>
+                                                <label class="form-check-label" for="2fa">Autenticação de Dois Fatores</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="fraud-detection" name="fraud-detection" checked>
-                                                <label class="form-check-label" for="fraud-detection">Detecção de Fraude</label>
+                                                <input class="form-check-input" type="checkbox" id="ipRestriction" checked>
+                                                <label class="form-check-label" for="ipRestriction">Restrição de IP</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="activityLogs" name="activityLogs" checked>
+                                                <input class="form-check-input" type="checkbox" id="activityLogs" checked>
                                                 <label class="form-check-label" for="activityLogs">Logs de Atividade</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="autoLogout" name="autoLogout" checked>
+                                                <input class="form-check-input" type="checkbox" id="autoLogout" checked>
                                                 <label class="form-check-label" for="autoLogout">Logout Automático</label>
                                             </div>
                                             <div class="mb-3">
-                                                <label for="session-timeout" class="form-label">Tempo para Logout Automático (minutos)</label>
-                                                <input type="number" class="form-control" id="session-timeout" name="session-timeout" value="5">
+                                                <label for="logoutTime" class="form-label">Tempo para Logout Automático (minutos)</label>
+                                                <input type="number" class="form-control" id="logoutTime" value="30">
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="max-daily-transactions" class="form-label">Máximo de Transações Diárias</label>
-                                                <input type="number" class="form-control" id="max-daily-transactions" name="max-daily-transactions" value="50">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="max-daily-amount" class="form-label">Valor Máximo Diário</label>
-                                                <input type="number" class="form-control" id="max-daily-amount" name="max-daily-amount" value="1000000">
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            <button type="button" class="btn btn-primary">Salvar Configurações</button>
                                         </form>
                                     </div>
                                 </div>
@@ -865,18 +783,18 @@
                                         <h5 class="mb-0">Configurações Gerais</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="atm-config-form">
+                                        <form>
                                             <div class="mb-3">
                                                 <label for="atmName" class="form-label">Nome do ATM</label>
-                                                <input type="text" class="form-control" id="atm-id" name="atm-id" value="LiquidGold ATM #001">
+                                                <input type="text" class="form-control" id="atmName" value="LiquidGold ATM #001">
                                             </div>
                                             <div class="mb-3">
                                                 <label for="location" class="form-label">Localização</label>
-                                                <input type="text" class="form-control" id="atm-location" name="atm-location" value="São Paulo, SP">
+                                                <input type="text" class="form-control" id="location" value="São Paulo, SP">
                                             </div>
                                             <div class="mb-3">
                                                 <label for="timezone" class="form-label">Fuso Horário</label>
-                                                <select class="form-select" id="timezone" name="timezone">
+                                                <select class="form-select" id="timezone">
                                                     <option value="-3">America/Sao_Paulo (GMT-3)</option>
                                                     <option value="-2">America/Noronha (GMT-2)</option>
                                                     <option value="-4">America/Manaus (GMT-4)</option>
@@ -885,13 +803,13 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label for="language" class="form-label">Idioma</label>
-                                                <select class="form-select" id="atm-language" name="atm-language">
+                                                <select class="form-select" id="language">
                                                     <option value="pt-BR">Português (Brasil)</option>
                                                     <option value="en-US">English (US)</option>
                                                     <option value="es">Español</option>
                                                 </select>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            <button type="button" class="btn btn-primary">Salvar Configurações</button>
                                         </form>
                                     </div>
                                 </div>
@@ -902,38 +820,30 @@
                                         <h5 class="mb-0">Configurações de Criptomoedas</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="bitcoin-config-form">
+                                        <form>
                                             <div class="mb-3">
                                                 <label for="btcNetwork" class="form-label">Rede Bitcoin</label>
-                                                <select class="form-select" id="exchange-source" name="exchange-source">
+                                                <select class="form-select" id="btcNetwork">
                                                     <option value="mainnet">Mainnet</option>
                                                     <option value="testnet">Testnet</option>
                                                 </select>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="btcFee" class="form-label">Taxa de Serviço BTC (%)</label>
-                                                <input type="number" class="form-control" id="service-fee" name="service-fee" value="2.5">
+                                                <input type="number" class="form-control" id="btcFee" value="2.5">
                                             </div>
                                             <div class="mb-3">
                                                 <label for="usdtNetwork" class="form-label">Rede USDT</label>
-                                                <select class="form-select" id="usdtNetwork" name="usdtNetwork">
+                                                <select class="form-select" id="usdtNetwork">
                                                     <option value="trc20">TRC20</option>
                                                     <option value="erc20">ERC20</option>
                                                 </select>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="usdtFee" class="form-label">Taxa de Serviço USDT (%)</label>
-                                                <input type="number" class="form-control" id="usdtFee" name="usdtFee" value="2.0">
+                                                <input type="number" class="form-control" id="usdtFee" value="2.0">
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="min-amount" class="form-label">Valor Mínimo</label>
-                                                <input type="number" class="form-control" id="min-amount" name="min-amount" value="10000">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="max-amount" class="form-label">Valor Máximo</label>
-                                                <input type="number" class="form-control" id="max-amount" name="max-amount" value="250000">
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            <button type="button" class="btn btn-primary">Salvar Configurações</button>
                                         </form>
                                     </div>
                                 </div>
@@ -981,28 +891,28 @@
                                         <h5 class="mb-0">Configurações de Notificações</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="notifications-config-form">
+                                        <form>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="email-enabled" name="email-enabled" checked>
-                                                <label class="form-check-label" for="email-enabled">Notificações por E-mail</label>
+                                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                                <label class="form-check-label" for="emailNotifications">Notificações por E-mail</label>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="emailAddress" class="form-label">E-mail para Notificações</label>
-                                                <input type="email" class="form-control" id="emailAddress" name="emailAddress" value="admin@liquidgold.com">
+                                                <input type="email" class="form-control" id="emailAddress" value="admin@liquidgold.com">
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="webhook-enabled" name="webhook-enabled">
-                                                <label class="form-check-label" for="webhook-enabled">Notificações por Webhook</label>
+                                                <input class="form-check-input" type="checkbox" id="smsNotifications">
+                                                <label class="form-check-label" for="smsNotifications">Notificações por SMS</label>
                                             </div>
                                             <div class="mb-3">
-                                                <label for="webhook-url" class="form-label">URL do Webhook</label>
-                                                <input type="url" class="form-control" id="webhook-url" name="webhook-url" value="">
+                                                <label for="phoneNumber" class="form-label">Número de Telefone</label>
+                                                <input type="tel" class="form-control" id="phoneNumber" value="+55 11 99999-9999">
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="pushNotifications" name="pushNotifications" checked>
+                                                <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
                                                 <label class="form-check-label" for="pushNotifications">Notificações Push</label>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            <button type="button" class="btn btn-primary">Salvar Configurações</button>
                                         </form>
                                     </div>
                                 </div>
@@ -1013,28 +923,28 @@
                                         <h5 class="mb-0">Eventos para Notificação</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="notification-events-form">
+                                        <form>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="notify-transactions" name="notify-transactions" checked>
-                                                <label class="form-check-label" for="notify-transactions">Transações</label>
+                                                <input class="form-check-input" type="checkbox" id="transactionNotifications" checked>
+                                                <label class="form-check-label" for="transactionNotifications">Transações</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="notify-security" name="notify-security" checked>
-                                                <label class="form-check-label" for="notify-security">Alertas de Segurança</label>
+                                                <input class="form-check-input" type="checkbox" id="securityNotifications" checked>
+                                                <label class="form-check-label" for="securityNotifications">Alertas de Segurança</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="notify-system" name="notify-system" checked>
-                                                <label class="form-check-label" for="notify-system">Status do Sistema</label>
+                                                <input class="form-check-input" type="checkbox" id="systemNotifications" checked>
+                                                <label class="form-check-label" for="systemNotifications">Status do Sistema</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="notify-maintenance" name="notify-maintenance" checked>
-                                                <label class="form-check-label" for="notify-maintenance">Manutenção Programada</label>
+                                                <input class="form-check-input" type="checkbox" id="maintenanceNotifications" checked>
+                                                <label class="form-check-label" for="maintenanceNotifications">Manutenção Programada</label>
                                             </div>
                                             <div class="mb-3 form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="notify-updates" name="notify-updates" checked>
-                                                <label class="form-check-label" for="notify-updates">Atualizações de Software</label>
+                                                <input class="form-check-input" type="checkbox" id="updateNotifications" checked>
+                                                <label class="form-check-label" for="updateNotifications">Atualizações de Software</label>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                                            <button type="button" class="btn btn-primary">Salvar Configurações</button>
                                         </form>
                                     </div>
                                 </div>

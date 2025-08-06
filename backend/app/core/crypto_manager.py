@@ -12,6 +12,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from .config import atm_config
 from .logger import atm_logger
+from .cache_manager import cache_manager
 
 class CryptoManager:
     """Gerenciador de múltiplas criptomoedas"""
@@ -47,31 +48,56 @@ class CryptoManager:
         }
     
     def get_btc_usd_quote(self) -> float:
-        """Obtém cotação BTC/USD do Binance"""
+        """Obtém cotação BTC/USD do Binance com cache"""
+        # Verificar cache primeiro
+        cached_quote = cache_manager.get("quotes:BTC:USD")
+        if cached_quote:
+            return float(cached_quote["price"])
+            
         try:
             response = requests.get(f"{self.binance_url}?symbol=BTCUSDT", timeout=5)
             data = response.json()
             price = float(data["price"])
+            
+            # Armazenar no cache
+            cache_manager.set("quotes:BTC:USD", {"price": price, "timestamp": datetime.now().isoformat()}, category="quotes")
+            
             return price
         except Exception as e:
             self.logger.log_system('crypto_manager', 'btc_usd_quote_error', {'error': str(e)})
             raise Exception(f"Erro ao buscar cotação BTC/USD: {e}")
     
     def get_btc_ars_quote(self) -> float:
-        """Obtém cotação BTC/ARS do Bitso"""
+        """Obtém cotação BTC/ARS do Bitso com cache"""
+        # Verificar cache primeiro
+        cached_quote = cache_manager.get("quotes:BTC:ARS")
+        if cached_quote:
+            return float(cached_quote["price"])
+            
         try:
             response = requests.get(self.bitso_url, timeout=5)
             data = response.json()
             price = float(data["payload"]["last"])
+            
+            # Armazenar no cache
+            cache_manager.set("quotes:BTC:ARS", {"price": price, "timestamp": datetime.now().isoformat()}, category="quotes")
+            
             return price
         except Exception as e:
             self.logger.log_system('crypto_manager', 'btc_quote_error', {'error': str(e)})
             raise Exception(f"Erro ao buscar cotação BTC/ARS: {e}")
     
     def get_usdt_ars_quote(self) -> float:
-        """Obtém cotação USDT/ARS via múltiplas APIs"""
+        """Obtém cotação USDT/ARS via múltiplas APIs com cache"""
+        # Verificar cache primeiro
+        cached_quote = cache_manager.get("quotes:USDT:ARS")
+        if cached_quote:
+            return float(cached_quote["price"])
+            
         try:
             # Tentar múltiplas APIs em ordem de prioridade
+            price = None
+            source = None
             
             # 1. Ripio API (corretora argentina)
             try:
@@ -79,28 +105,46 @@ class CryptoManager:
                 ripio_data = ripio_response.json()
                 for pair in ripio_data.get('data', []):
                     if pair.get('pair') == 'USDT_ARS':
-                        return float(pair.get('last_price', 0))
-            except:
-                pass
+                        price = float(pair.get('last_price', 0))
+                        source = "ripio"
+                        break
+            except Exception as e:
+                self.logger.log_error('crypto_manager', 'usdt_quote_ripio_error', {'error': str(e)})
             
             # 2. Buenbit API (corretora argentina)
-            try:
-                buenbit_response = requests.get("https://api.buenbit.com/api/v1/market/ticker", timeout=5)
-                buenbit_data = buenbit_response.json()
-                for ticker in buenbit_data.get('data', []):
-                    if ticker.get('symbol') == 'USDT_ARS':
-                        return float(ticker.get('last_price', 0))
-            except:
-                pass
+            if not price:
+                try:
+                    buenbit_response = requests.get("https://api.buenbit.com/api/v1/market/ticker", timeout=5)
+                    buenbit_data = buenbit_response.json()
+                    for ticker in buenbit_data.get('data', []):
+                        if ticker.get('symbol') == 'USDT_ARS':
+                            price = float(ticker.get('last_price', 0))
+                            source = "buenbit"
+                            break
+                except Exception as e:
+                    self.logger.log_error('crypto_manager', 'usdt_quote_buenbit_error', {'error': str(e)})
             
             # 3. Lemon API (corretora argentina)
-            try:
-                lemon_response = requests.get("https://api.lemon.com/v1/market/ticker", timeout=5)
-                lemon_data = lemon_response.json()
-                if 'USDT_ARS' in lemon_data:
-                    return float(lemon_data['USDT_ARS'].get('last', 0))
-            except:
-                pass
+            if not price:
+                try:
+                    lemon_response = requests.get("https://api.lemon.com/v1/market/ticker", timeout=5)
+                    lemon_data = lemon_response.json()
+                    if 'USDT_ARS' in lemon_data:
+                        price = float(lemon_data['USDT_ARS'].get('last', 0))
+                        source = "lemon"
+                except Exception as e:
+                    self.logger.log_error('crypto_manager', 'usdt_quote_lemon_error', {'error': str(e)})
+            
+            # Se encontrou um preço, armazenar no cache
+            if price and price > 0:
+                cache_manager.set("quotes:USDT:ARS", {
+                    "price": price, 
+                    "timestamp": datetime.now().isoformat(),
+                    "source": source
+                }, category="quotes")
+                return price
+            else:
+                raise Exception("Não foi possível obter cotação USDT/ARS de nenhuma fonte")
             
             # 4. Binance + USD/ARS (fallback)
             try:
@@ -328,4 +372,4 @@ class CryptoManager:
         return config['min_amount'] <= amount_ars <= config['max_amount']
 
 # Instância global
-crypto_manager = CryptoManager() 
+crypto_manager = CryptoManager()

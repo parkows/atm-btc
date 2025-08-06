@@ -8,7 +8,7 @@ let currentMethod = null;
 let detectedAmount = 0;
 
 // API Base URL
-const API_BASE = 'http://localhost:8000';
+const API_BASE = window.location.origin;
 
 // Funções de navegação
 function showPurchaseForm() {
@@ -167,11 +167,47 @@ function confirmAmount() {
         showPurchaseStep(8);
         
         // Simular processamento por 5 segundos
-        setTimeout(() => {
+        setTimeout(async () => {
             currentStep = 9;
             showPurchaseStep(9);
+            
+            // Criar transação de teste no admin
+            await createTestTransaction();
         }, 5000);
     }, 1000);
+}
+
+// Função para criar transação de teste
+async function createTestTransaction() {
+    try {
+        console.log('Criando transação de teste...');
+        
+        const response = await fetch(`${API_BASE}/api/admin/simulate-transaction`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                crypto_type: selectedCrypto || 'BTC',
+                amount_ars: detectedAmount,
+                communication_method: selectedCommunication,
+                phone: currentPhone
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Transação de teste criada com sucesso:', result.transaction);
+            showStatus('purchaseStatus', '✅ Transação processada e registrada no sistema!', 'success');
+        } else {
+            console.error('❌ Erro ao criar transação de teste:', result);
+            showStatus('purchaseStatus', '⚠️ Transação processada, mas erro ao registrar no sistema', 'warning');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao criar transação de teste:', error);
+        showStatus('purchaseStatus', '⚠️ Transação processada, mas erro ao registrar no sistema', 'warning');
+    }
 }
 
 // Funções de venda
@@ -270,10 +306,49 @@ function showQRCode() {
 function confirmPayment() {
     showStatus('saleStatus', 'Pagamento confirmado!', 'success');
     
-    setTimeout(() => {
+    setTimeout(async () => {
         document.getElementById('saleStep4').classList.add('hidden');
         document.getElementById('saleStep5').classList.remove('hidden');
+        
+        // Criar transação de teste para venda
+        await createTestSaleTransaction();
     }, 1000);
+}
+
+// Função para criar transação de teste para venda
+async function createTestSaleTransaction() {
+    try {
+        console.log('Criando transação de teste para venda...');
+        
+        const saleAmount = document.getElementById('saleAmount').value;
+        
+        const response = await fetch(`${API_BASE}/api/admin/simulate-transaction`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                crypto_type: selectedSaleCrypto,
+                amount_ars: parseInt(saleAmount),
+                transaction_type: 'sale',
+                communication_method: 'qr_code',
+                phone: 'N/A'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Transação de venda criada com sucesso:', result.transaction);
+            showStatus('saleStatus', '✅ Venda processada e registrada no sistema!', 'success');
+        } else {
+            console.error('❌ Erro ao criar transação de venda:', result);
+            showStatus('saleStatus', '⚠️ Venda processada, mas erro ao registrar no sistema', 'warning');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao criar transação de venda:', error);
+        showStatus('saleStatus', '⚠️ Venda processada, mas erro ao registrar no sistema', 'warning');
+    }
 }
 
 // Funções auxiliares
@@ -458,4 +533,4 @@ document.addEventListener('DOMContentLoaded', function() {
             showSaleInfo();
         }
     });
-}); 
+});
