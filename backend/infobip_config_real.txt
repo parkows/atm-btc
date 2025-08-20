@@ -1,0 +1,14 @@
+# Configurações do Infobip para LiquidGold ATM
+# Credenciais reais fornecidas pelo usuário
+
+# Credenciais do Infobip
+INFOBIP_API_KEY=79bec273e41a23ad3b8faa773e443ab8-deb0d324-2fb7-484e-9133-03c2a215c1d6
+INFOBIP_BASE_URL=https://9kegvy.api.infobip.com
+INFOBIP_SENDER=LiquidGold
+
+# Número de teste (substitua pelo seu número real)
+TEST_PHONE_NUMBER=+5491112345678
+
+# Configurações do sistema
+DEBUG=true
+ENVIRONMENT=development

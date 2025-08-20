@@ -66,14 +66,16 @@ app.add_middleware(
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(AuditMiddleware)
 
-# Importar API de backup
+# Importar APIs
 from app.api import backup as backup_api
+from app.api import sms_endpoints as sms_api
 
 # Incluir rotas da API
 app.include_router(atm.router, prefix="/api/atm", tags=["ATM"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(auth_api.router, prefix="/api/admin", tags=["Auth"])
 app.include_router(backup_api.router, prefix="/api/admin/backup", tags=["Backup"])
+app.include_router(sms_api.router, prefix="/api/sms", tags=["SMS"])
 
 # Servir arquivos estáticos
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

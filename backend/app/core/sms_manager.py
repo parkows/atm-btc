@@ -22,8 +22,9 @@ class SMSManager:
     
     def __init__(self):
         """Inicializa o gerenciador de SMS"""
-        self.api_key = os.getenv('INFOBIP_API_KEY')
-        self.base_url = os.getenv('INFOBIP_BASE_URL', 'https://api.infobip.com')
+        # Configurações padrão (para desenvolvimento)
+        self.api_key = os.getenv('INFOBIP_API_KEY', '79bec273e41a23ad3b8faa773e443ab8-deb0d324-2fb7-484e-9133-03c2a215c1d6')
+        self.base_url = os.getenv('INFOBIP_BASE_URL', 'https://9kegvy.api.infobip.com')
         self.sender = os.getenv('INFOBIP_SENDER', 'LiquidGold')
         
         if not self.api_key:
@@ -41,7 +42,8 @@ class SMSManager:
                 api_key={"APIKeyHeader": self.api_key}
             )
             self.sms_api = SendSmsApi(configuration)
-            logger.info("Cliente Infobip configurado com sucesso")
+            logger.info(f"Cliente Infobip configurado com sucesso - URL: {self.base_url}")
+            logger.info(f"API Key: {self.api_key[:20]}...")
         except Exception as e:
             logger.error(f"Erro ao configurar cliente Infobip: {e}")
             self.enabled = False
@@ -135,7 +137,7 @@ class SMSManager:
     
     def send_verification_code(self, phone_number: str, code: str, expires_in_minutes: int = 10) -> Dict:
         """
-        Envia código de verificação por SMS
+        Envia código de verificação por SMS para confirmação do número
         
         Args:
             phone_number: Número do telefone
@@ -145,7 +147,9 @@ class SMSManager:
         Returns:
             Dict com resultado da operação
         """
-        message = f"🔐 LiquidGold ATM - Seu código de verificação: {code}\n\n⏰ Expira em {expires_in_minutes} minutos\n\n🚫 Não compartilhe este código com ninguém."
+        message = f"🔐 LiquidGold ATM - Código de verificação: {code}\n\n⏰ Válido por {expires_in_minutes} minutos\n\n📱 Use este código para confirmar seu número\n\n🚫 Não compartilhe com ninguém"
+        
+        logger.info(f"Enviando código de verificação para {phone_number}: {code}")
         
         return self.send_sms(
             phone_number=phone_number,
@@ -183,7 +187,7 @@ class SMSManager:
     
     def send_wallet_request(self, phone_number: str, crypto_type: str, amount_ars: float) -> Dict:
         """
-        Solicita carteira do usuário por SMS
+        Solicita carteira do usuário por SMS (segunda chamada da API)
         
         Args:
             phone_number: Número do telefone
@@ -193,7 +197,9 @@ class SMSManager:
         Returns:
             Dict com resultado da operação
         """
-        message = f"📱 LiquidGold ATM - Solicitação de carteira\n\n💰 {crypto_type}: ${amount_ars:,.2f} ARS\n\n📝 Por favor, envie seu endereço {crypto_type} para continuar a transação.\n\n⏰ Esta solicitação expira em 30 minutos."
+        message = f"📱 LiquidGold ATM - Solicitação de carteira\n\n💰 {crypto_type}: ${amount_ars:,.2f} ARS\n\n📝 Por favor, envie seu endereço {crypto_type} para continuar a transação.\n\n⏰ Esta solicitação expira em 30 minutos.\n\n💡 Responda este SMS com seu endereço {crypto_type}"
+        
+        logger.info(f"Solicitando carteira {crypto_type} para {phone_number} - Valor: ${amount_ars:,.2f} ARS")
         
         return self.send_sms(
             phone_number=phone_number,
