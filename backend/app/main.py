@@ -1,9 +1,13 @@
-from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi import FastAPI, BackgroundTasks, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+import json
+import asyncio
+from typing import List
+
 from app.middleware import RateLimitMiddleware, AuditMiddleware
-from app.api import atm, admin
+from app.api import atm, admin, auth as auth_api
 from app.core.logger import atm_logger
 from app.core.config import atm_config
 from app.core.notifications import notification_manager
@@ -13,8 +17,11 @@ from app.core.security import SecurityManager
 from app.core.i18n import i18n_manager
 from app.core.auth import auth_manager
 from app.core.backup_manager import backup_manager
-from app.api import auth as auth_api
+from app.core.auto_reports import auto_report_generator
+from app.core.monitoring import health_monitor
+from app.core.session_manager import SessionManager
 from app.deps import get_db_session_factory
+
 import threading
 import time
 from datetime import datetime, timedelta
@@ -29,7 +36,6 @@ security_manager = SecurityManager(db_session_factory)
 simulated_transactions = []
 
 # Inicializar session_manager
-from app.core.session_manager import SessionManager
 session_manager = SessionManager(db_session_factory)
 
 # Inicializar gerenciador de autenticação já foi feito na importação
@@ -93,11 +99,7 @@ async def get_atm_interface_js():
     """JavaScript da interface do ATM"""
     return FileResponse("app/static/atm_interface.js")
 
-# Rota de teste
-@app.get("/test")
-async def get_test():
-    """Página de teste"""
-    return FileResponse("test_interface.html")
+# Rota de teste removida (artefato de desenvolvimento)
 
 # Background tasks
 def health_check_task():
@@ -623,7 +625,74 @@ async def simulate_transaction(request: Request):
         # Log da simulação
         atm_logger.log_system('simulation', 'transaction_simulated', transaction)
         
+        # Notificar todos os admins conectados em tempo real
+        try:
+            print(f"DEBUG: Notificando admins sobre nova transação: {transaction['id']}")
+            await notify_admins("new_transaction", {
+                "transaction": transaction,
+                "message": f"Nova transação simulada: {transaction['crypto_type']} - ${transaction['amount_ars']:,.0f} ARS"
+            })
+            print(f"DEBUG: Notificação enviada com sucesso para {len(manager.active_connections)} admins")
+        except Exception as notify_error:
+            print(f"DEBUG: Erro ao notificar admins: {notify_error}")
+            atm_logger.log_error('websocket', 'notification_failed', {'error': str(notify_error)})
+        
         return {"success": True, "transaction": transaction}
     except Exception as e:
         atm_logger.log_error('api', 'simulate_transaction_error', {'error': str(e)})
         return {"error": "Erro ao simular transação"}
+
+# Gerenciador de conexões WebSocket
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        print(f"DEBUG: Nova conexão WebSocket aceita. Total de conexões: {len(self.active_connections)}")
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+        print(f"DEBUG: Conexão WebSocket removida. Total de conexões: {len(self.active_connections)}")
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        print(f"DEBUG: broadcast iniciado para {len(self.active_connections)} conexões")
+        for i, connection in enumerate(self.active_connections):
+            try:
+                print(f"DEBUG: Enviando mensagem para conexão {i+1}")
+                await connection.send_text(message)
+                print(f"DEBUG: Mensagem enviada com sucesso para conexão {i+1}")
+            except Exception as e:
+                print(f"DEBUG: Erro ao enviar para conexão {i+1}: {e}")
+                # Remove conexões inativas
+                self.active_connections.remove(connection)
+        print(f"DEBUG: broadcast concluído")
+
+manager = ConnectionManager()
+
+# Endpoint WebSocket para notificações em tempo real
+@app.websocket("/ws/admin")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Manter conexão ativa
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+# Função para notificar todos os admins conectados
+async def notify_admins(event_type: str, data: dict):
+    print(f"DEBUG: notify_admins chamada - tipo: {event_type}, conexões ativas: {len(manager.active_connections)}")
+    message = json.dumps({
+        "type": event_type,
+        "data": data,
+        "timestamp": asyncio.get_event_loop().time()
+    })
+    print(f"DEBUG: Mensagem JSON criada: {message}")
+    await manager.broadcast(message)
+    print(f"DEBUG: broadcast concluído")

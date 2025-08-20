@@ -7,7 +7,10 @@ Implementação de cache com Redis para melhorar performance
 import json
 import time
 import os
-import redis
+try:
+    import redis  # type: ignore
+except Exception:  # Redis pode não estar instalado no ambiente local
+    redis = None
 from typing import Any, Optional, Dict, List, Union
 from datetime import datetime, timedelta
 
@@ -16,12 +19,14 @@ from app.core.logger import atm_logger
 # Configuração do Redis para cache
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-# Inicializar cliente Redis
-try:
-    redis_client = redis.from_url(REDIS_URL)
-except Exception as e:
-    atm_logger.log_error('cache_manager', 'redis_connection_error', {'error': str(e)})
-    redis_client = None
+# Inicializar cliente Redis (com fallback em memória)
+redis_client = None
+if redis is not None:
+    try:
+        redis_client = redis.from_url(REDIS_URL)
+    except Exception as e:
+        atm_logger.log_error('cache_manager', 'redis_connection_error', {'error': str(e)})
+        redis_client = None
 
 class CacheManager:
     """
@@ -31,6 +36,7 @@ class CacheManager:
     
     def __init__(self):
         self.redis = redis_client
+        self.memory_cache: Dict[str, Any] = {}
         self.logger = atm_logger
         
         # Configurações de TTL (Time To Live) em segundos
@@ -56,13 +62,20 @@ class CacheManager:
         Obtém valor do cache
         """
         try:
-            data = self.redis.get(key)
-            if data:
+            if self.redis:
+                data = self.redis.get(key)
+                if data:
+                    self.stats['hits'] += 1
+                    return json.loads(data)
+                else:
+                    self.stats['misses'] += 1
+                    return default
+            # Fallback em memória
+            if key in self.memory_cache:
                 self.stats['hits'] += 1
-                return json.loads(data)
-            else:
-                self.stats['misses'] += 1
-                return default
+                return self.memory_cache[key]
+            self.stats['misses'] += 1
+            return default
         except Exception as e:
             self.logger.log_error('cache', 'get_error', {
                 'key': key,
@@ -80,7 +93,11 @@ class CacheManager:
                 ttl = self.ttl_config.get(category, self.ttl_config['default'])
             
             # Serializar e armazenar
-            self.redis.setex(key, ttl, json.dumps(value))
+            if self.redis:
+                self.redis.setex(key, ttl, json.dumps(value))
+            else:
+                # Fallback em memória (sem TTL real)
+                self.memory_cache[key] = value
             self.stats['sets'] += 1
             return True
         except Exception as e:
@@ -95,7 +112,10 @@ class CacheManager:
         Remove valor do cache
         """
         try:
-            self.redis.delete(key)
+            if self.redis:
+                self.redis.delete(key)
+            else:
+                self.memory_cache.pop(key, None)
             self.stats['deletes'] += 1
             return True
         except Exception as e:
@@ -111,12 +131,19 @@ class CacheManager:
         """
         try:
             pattern = f"{category}:*"
-            keys = self.redis.keys(pattern)
-            if keys:
-                count = self.redis.delete(*keys)
-                self.stats['deletes'] += count
-                return count
-            return 0
+            if self.redis:
+                keys = self.redis.keys(pattern)
+                if keys:
+                    count = self.redis.delete(*keys)
+                    self.stats['deletes'] += count
+                    return count
+                return 0
+            # Fallback em memória
+            to_delete = [k for k in list(self.memory_cache.keys()) if k.startswith(f"{category}:")]
+            for k in to_delete:
+                self.memory_cache.pop(k, None)
+            self.stats['deletes'] += len(to_delete)
+            return len(to_delete)
         except Exception as e:
             self.logger.log_error('cache', 'flush_category_error', {
                 'category': category,

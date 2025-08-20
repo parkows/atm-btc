@@ -1,0 +1,23 @@
+# Configurações do Infobip para LiquidGold ATM
+# Copie este arquivo para .env e preencha com seus valores reais
+
+# Credenciais do Infobip
+INFOBIP_API_KEY=SEU_API_KEY_AQUI
+INFOBIP_BASE_URL=https://api.infobip.com
+INFOBIP_SENDER=LiquidGold
+
+# Número de teste (seu próprio número para testes)
+TEST_PHONE_NUMBER=+5491112345678
+
+# Configurações do sistema
+DEBUG=true
+ENVIRONMENT=development
+
+# Exemplo de como obter as credenciais:
+# 1. Acesse: https://portal.infobip.com/
+# 2. Faça login na sua conta
+# 3. Vá em "API Security" → "API Keys"
+# 4. Crie uma nova API Key
+# 5. Copie a chave para INFOBIP_API_KEY
+# 6. O BASE_URL geralmente é https://api.infobip.com
+# 7. O SENDER é o nome que aparecerá no SMS (ex: LiquidGold)

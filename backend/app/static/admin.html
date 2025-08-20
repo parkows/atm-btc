@@ -269,6 +269,59 @@
         .spinner-border {
             color: var(--secondary-color);
         }
+        
+        /* Indicador de status WebSocket */
+        .websocket-status {
+            text-align: center;
+        }
+        
+        .websocket-status .text-success {
+            color: var(--success-color) !important;
+        }
+        
+        .websocket-status .text-warning {
+            color: var(--warning-color) !important;
+        }
+        
+        .websocket-status .text-danger {
+            color: var(--danger-color) !important;
+        }
+        
+        .websocket-status .text-secondary {
+            color: rgba(255,255,255,0.6) !important;
+        }
+        
+        /* Toast notifications */
+        .toast-notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .bg-success {
+            background-color: var(--success-color) !important;
+        }
+        
+        .bg-warning {
+            background-color: var(--warning-color) !important;
+        }
+        
+        .bg-danger {
+            background-color: var(--danger-color) !important;
+        }
+        
+        .bg-info {
+            background-color: #17a2b8 !important;
+        }
     </style>
 </head>
 <body>
@@ -278,6 +331,11 @@
             <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="logo">
                     <div class="logo-text">LiquidGold ATM</div>
+                    <div class="websocket-status mt-2">
+                        <small id="ws-status" class="text-muted">
+                            <i class="fas fa-circle text-secondary"></i> Conectando...
+                        </small>
+                    </div>
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">

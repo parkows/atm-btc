@@ -3,6 +3,9 @@ const API_BASE = '/api';
 
 // Variáveis globais
 let currentSection = 'dashboard';
+let websocket = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 // Debug: Verificar se o script está carregando
 console.log('Admin.js carregado com sucesso!');
@@ -14,6 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar event listeners
     console.log('Configurando event listeners...');
     setupEventListeners();
+    
+    // Conectar WebSocket para atualizações em tempo real
+    console.log('Conectando WebSocket...');
+    connectWebSocket();
     
     // Inicializar apenas o dashboard primeiro
     console.log('Carregando apenas dashboard...');
@@ -1326,4 +1333,215 @@ async function generateAccountingReport(period) {
 function exportAccountingReport(period, format) {
     console.log(`Exportando relatório contábil ${period} em formato ${format}`);
     showAlert(`Exportando relatório contábil ${period} em formato ${format}`, 'info');
+}
+
+// Função para conectar WebSocket
+function connectWebSocket() {
+    try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/admin`;
+        
+        websocket = new WebSocket(wsUrl);
+        
+        websocket.onopen = function(event) {
+            console.log('WebSocket conectado com sucesso!');
+            reconnectAttempts = 0;
+            updateWebSocketStatus('connected');
+            
+            // Enviar mensagem de heartbeat para manter conexão ativa
+            setInterval(() => {
+                if (websocket.readyState === WebSocket.OPEN) {
+                    websocket.send('heartbeat');
+                }
+            }, 30000); // 30 segundos
+        };
+        
+        websocket.onmessage = function(event) {
+            console.log('Mensagem WebSocket recebida (raw):', event.data);
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Mensagem WebSocket parseada:', data);
+                handleWebSocketMessage(data);
+            } catch (error) {
+                console.error('Erro ao processar mensagem WebSocket:', error);
+            }
+        };
+        
+        websocket.onclose = function(event) {
+            console.log('WebSocket desconectado:', event.code, event.reason);
+            updateWebSocketStatus('disconnected');
+            
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                reconnectAttempts++;
+                console.log(`Tentativa de reconexão ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} em 3 segundos...`);
+                setTimeout(connectWebSocket, 3000);
+            } else {
+                console.error('Máximo de tentativas de reconexão atingido');
+                updateWebSocketStatus('failed');
+            }
+        };
+        
+        websocket.onerror = function(error) {
+            console.error('Erro no WebSocket:', error);
+            updateWebSocketStatus('error');
+        };
+        
+    } catch (error) {
+        console.error('Erro ao conectar WebSocket:', error);
+        updateWebSocketStatus('error');
+    }
+}
+
+// Função para atualizar status visual do WebSocket
+function updateWebSocketStatus(status) {
+    const statusElement = document.getElementById('ws-status');
+    if (!statusElement) return;
+    
+    const icon = statusElement.querySelector('i');
+    const text = statusElement.textContent || '';
+    
+    switch (status) {
+        case 'connected':
+            icon.className = 'fas fa-circle text-success';
+            statusElement.innerHTML = icon.outerHTML + ' Conectado';
+            statusElement.className = 'text-success';
+            break;
+        case 'disconnected':
+            icon.className = 'fas fa-circle text-warning';
+            statusElement.innerHTML = icon.outerHTML + ' Reconectando...';
+            statusElement.className = 'text-warning';
+            break;
+        case 'failed':
+            icon.className = 'fas fa-circle text-danger';
+            statusElement.innerHTML = icon.outerHTML + ' Falha na conexão';
+            statusElement.className = 'text-danger';
+            break;
+        case 'error':
+            icon.className = 'fas fa-circle text-danger';
+            statusElement.innerHTML = icon.outerHTML + ' Erro de conexão';
+            statusElement.className = 'text-danger';
+            break;
+        default:
+            icon.className = 'fas fa-circle text-secondary';
+            statusElement.innerHTML = icon.outerHTML + ' Conectando...';
+            statusElement.className = 'text-secondary';
+    }
+}
+
+// Função para processar mensagens WebSocket
+function handleWebSocketMessage(data) {
+    console.log('Mensagem WebSocket recebida:', data);
+    console.log('Tipo da mensagem:', data.type);
+    
+    switch (data.type) {
+        case 'new_transaction':
+            console.log('Processando nova transação...');
+            handleNewTransaction(data.data);
+            break;
+        case 'transaction_updated':
+            console.log('Processando atualização de transação...');
+            handleTransactionUpdate(data.data);
+            break;
+        case 'system_alert':
+            console.log('Processando alerta do sistema...');
+            handleSystemAlert(data.data);
+            break;
+        default:
+            console.log('Tipo de mensagem não reconhecido:', data.type);
+    }
+}
+
+// Função para lidar com nova transação
+function handleNewTransaction(data) {
+    console.log('Nova transação recebida:', data);
+    console.log('Seção atual:', currentSection);
+    
+    // Mostrar notificação toast
+    showToast(data.message, 'success');
+    
+    // Atualizar dashboard automaticamente se estiver visível
+    if (currentSection === 'dashboard') {
+        console.log('Atualizando dashboard...');
+        loadDashboard();
+    }
+    
+    // Atualizar lista de transações se estiver visível
+    if (currentSection === 'transactions') {
+        console.log('Atualizando lista de transações...');
+        loadTransactions();
+    }
+    
+    // Atualizar relatórios se estiver visível
+    if (currentSection === 'reports') {
+        console.log('Atualizando relatórios...');
+        loadReports();
+    }
+    
+    console.log('Nova transação processada com sucesso');
+}
+
+// Função para lidar com atualização de transação
+function handleTransactionUpdate(data) {
+    console.log('Transação atualizada:', data);
+    
+    // Atualizar interfaces relevantes
+    if (currentSection === 'dashboard') {
+        loadDashboard();
+    }
+    if (currentSection === 'transactions') {
+        loadTransactions();
+    }
+}
+
+// Função para lidar com alertas do sistema
+function handleSystemAlert(data) {
+    console.log('Alerta do sistema:', data);
+    showToast(data.message, data.level || 'info');
+}
+
+// Função para mostrar toast de notificação
+function showToast(message, type = 'info') {
+    console.log(`Toast: ${message} (${type})`);
+    
+    // Criar elemento toast simples sem depender do Bootstrap
+    const toast = document.createElement('div');
+    toast.className = `toast-notification bg-${type} text-white`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    `;
+    
+    const iconClass = type === 'success' ? 'fa-check-circle' : 
+                     type === 'warning' ? 'fa-exclamation-triangle' : 
+                     type === 'danger' ? 'fa-times-circle' : 'fa-info-circle';
+    
+    toast.innerHTML = `
+        <div>
+            <i class="fas ${iconClass} me-2"></i>
+            ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.remove()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">
+            ×
+        </button>
+    `;
+    
+    // Adicionar ao body
+    document.body.appendChild(toast);
+    
+    // Auto-remover após 5 segundos
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.parentElement.removeChild(toast);
+        }
+    }, 5000);
 }

@@ -10,6 +10,22 @@ let detectedAmount = 0;
 // API Base URL
 const API_BASE = window.location.origin;
 
+// Controle de timers para o fluxo de compra (evita que timeouts de uma compra anterior
+// disparem quando o usuário inicia uma nova compra)
+let purchaseTimeoutIds = [];
+
+function schedulePurchaseTimeout(callback, delayMs) {
+    const id = setTimeout(callback, delayMs);
+    purchaseTimeoutIds.push(id);
+    return id;
+}
+
+function clearAllPurchaseTimeouts() {
+    if (purchaseTimeoutIds.length === 0) return;
+    purchaseTimeoutIds.forEach((id) => clearTimeout(id));
+    purchaseTimeoutIds = [];
+}
+
 // Funções de navegação
 function showPurchaseForm() {
     document.getElementById('mainScreen').style.display = 'none';
@@ -39,10 +55,26 @@ function goBack() {
 }
 
 function goToMain() {
-    document.getElementById('purchaseForm').style.display = 'none';
-    document.getElementById('saleForm').style.display = 'none';
-    document.getElementById('mainScreen').style.display = 'block';
-    document.getElementById('backButton').style.display = 'none';
+    // Garantir que nenhum timeout do fluxo anterior ainda esteja ativo
+    clearAllPurchaseTimeouts();
+
+    // Ocultar qualquer passo aberto da compra
+    try {
+        document.querySelectorAll('[id^="purchaseStep"]').forEach((el) => el.classList.add('hidden'));
+    } catch (_) {}
+
+    // Resetar os formulários para o estado inicial (com verificações defensivas)
+    try { resetPurchaseForm(); } catch (_) {}
+    try { resetSaleForm(); } catch (_) {}
+
+    const purchaseForm = document.getElementById('purchaseForm');
+    if (purchaseForm) purchaseForm.style.display = 'none';
+    const saleForm = document.getElementById('saleForm');
+    if (saleForm) saleForm.style.display = 'none';
+    const mainScreen = document.getElementById('mainScreen');
+    if (mainScreen) mainScreen.style.display = 'block';
+    const backButton = document.getElementById('backButton');
+    if (backButton) backButton.style.display = 'none';
 }
 
 // Funções de compra
@@ -85,7 +117,7 @@ function sendVerificationCode() {
     // Simular envio de código (em produção, chamar API)
     showStatus('purchaseStatus', `Código enviado para ${phone} via ${selectedCommunication}`, 'success');
     
-    setTimeout(() => {
+    schedulePurchaseTimeout(() => {
         currentStep = 3;
         showPurchaseStep(3);
     }, 1000);
@@ -103,7 +135,7 @@ function verifyCode() {
     if (code === '123456') {
         showStatus('purchaseStatus', 'Código verificado com sucesso!', 'success');
         
-        setTimeout(() => {
+        schedulePurchaseTimeout(() => {
             currentStep = 4;
             showPurchaseStep(4);
         }, 1000);
@@ -129,7 +161,7 @@ function selectCrypto(crypto) {
     
     showStatus('purchaseStatus', `${crypto} selecionado`, 'success');
     
-    setTimeout(() => {
+    schedulePurchaseTimeout(() => {
         currentStep = 5;
         showPurchaseStep(5);
     }, 1000);
@@ -139,7 +171,7 @@ function confirmWalletAddress() {
     // Simular recebimento da carteira do cliente
     showStatus('purchaseStatus', 'Carteira recebida e confirmada!', 'success');
     
-    setTimeout(() => {
+    schedulePurchaseTimeout(() => {
         currentStep = 6;
         showPurchaseStep(6);
     }, 1000);
@@ -153,7 +185,7 @@ function confirmCashInsertion() {
     
     showStatus('purchaseStatus', 'Valor detectado!', 'success');
     
-    setTimeout(() => {
+    schedulePurchaseTimeout(() => {
         currentStep = 7;
         showPurchaseStep(7);
     }, 1000);
@@ -162,12 +194,12 @@ function confirmCashInsertion() {
 function confirmAmount() {
     showStatus('purchaseStatus', 'Valor confirmado! Processando...', 'success');
     
-    setTimeout(() => {
+    schedulePurchaseTimeout(() => {
         currentStep = 8;
         showPurchaseStep(8);
         
         // Simular processamento por 5 segundos
-        setTimeout(async () => {
+        schedulePurchaseTimeout(async () => {
             currentStep = 9;
             showPurchaseStep(9);
             
@@ -240,14 +272,6 @@ async function showSaleInfo() {
         const feePercentage = selectedSaleCrypto === 'BTC' ? 0.08 : 0.06;
         const feeAmount = parseInt(amount) * feePercentage;
         const feeFormatted = `$${feeAmount.toLocaleString()} ARS`;
-        
-        console.log('Debug - Taxa:', {
-            crypto: selectedSaleCrypto,
-            amount: amount,
-            feePercentage: feePercentage,
-            feeAmount: feeAmount,
-            feeFormatted: feeFormatted
-        });
         
         // Atualizar informações
         document.getElementById('saleAmountInfo').textContent = `$${parseInt(amount).toLocaleString()} ARS`;
@@ -369,6 +393,9 @@ function showPurchaseStep(step) {
 }
 
 function resetPurchaseForm() {
+    // Limpar possíveis timeouts pendentes do fluxo anterior
+    clearAllPurchaseTimeouts();
+
     currentStep = 1;
     selectedCommunication = null;
     selectedCrypto = null;
@@ -376,21 +403,26 @@ function resetPurchaseForm() {
     currentMethod = null;
     detectedAmount = 0;
     
-    // Limpar campos
-    document.getElementById('purchasePhone').value = '';
-    document.getElementById('verificationCode').value = '';
-    document.getElementById('walletAddress').value = '';
+    // Limpar campos (verificar existência para evitar erros)
+    const phoneEl = document.getElementById('purchasePhone');
+    if (phoneEl) phoneEl.value = '';
+    const codeEl = document.getElementById('verificationCode');
+    if (codeEl) codeEl.value = '';
+    const walletEl = document.getElementById('walletAddress');
+    if (walletEl) walletEl.value = '';
     
     // Remover seleções
     document.querySelectorAll('.comm-option').forEach(option => {
         option.classList.remove('selected');
     });
     
-    // Desabilitar botão
-    document.getElementById('startPurchaseBtn').disabled = true;
+    // Desabilitar botão (se existir)
+    const startBtn = document.getElementById('startPurchaseBtn');
+    if (startBtn) startBtn.disabled = true;
     
-    // Limpar status
-    document.getElementById('purchaseStatus').innerHTML = '';
+    // Limpar status (se existir)
+    const statusEl = document.getElementById('purchaseStatus');
+    if (statusEl) statusEl.innerHTML = '';
     
     // Mostrar primeiro passo
     showPurchaseStep(1);
